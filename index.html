@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Babylon Template</title>
+    <title>Sign Language Player</title>
 
     <style>
       html,
@@ -12,6 +12,7 @@
         height: 100%;
         margin: 0;
         padding: 0;
+        background-color: #2c3e50;
       }
 
       #renderCanvas {
@@ -25,8 +26,7 @@
 
   <body>
     <canvas id="renderCanvas" touch-action="none"></canvas>
-    <!-- touch-action="none" for best results from PEP -->
-
-    <script src="src/main.js" type="module"></script>
+    <!-- Use our simplified player -->
+    <script src="src/simplePlayer.js" type="module"></script>
   </body>
 </html>
