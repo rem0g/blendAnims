@@ -1,6 +1,7 @@
 import * as BABYLON from "babylonjs";
 import "babylonjs-loaders";
 import "./signSequencer.css";
+import CameraController from "./cameraController.js";
 
 // Canvas and engine setup
 const canvas = document.getElementById("renderCanvas");
@@ -8,32 +9,32 @@ const engine = new BABYLON.Engine(canvas, true);
 
 // Available sign animations
 const availableSigns = [
-  { name: "HALLO", file: "HALLO-C_250226_1.glb" },
-  { name: "SCHOOL", file: "SCHOOL-D_250226_1.glb" },
+  { name: "HALLO", file: "signs/HALLO-C_250226_1.glb" },
+  { name: "SCHOOL", file: "signs/SCHOOL-D_250226_1.glb" },
 ];
 
 // Global scene
-let scene;
+const scene = new BABYLON.Scene(engine);
 
 // Initialize the 3D scene
-function createScene() {
+async function createScene() {
   // Create basic scene
-  scene = new BABYLON.Scene(engine);
+  // scene = new BABYLON.Scene(engine);
+  
+  scene.debugLayer.show();
+  console.log("Scene created:", scene);
 
-  // Setup camera with a close up to the avatar
-  const camera = new BABYLON.ArcRotateCamera(
-    "camera",
-    -Math.PI / 2,
-    Math.PI / 2.5,
-    3,
-    new BABYLON.Vector3(0, 1, 0)
-  );
-  camera.attachControl(canvas, true);
+  // Create camera
+  var camera = CameraController.getInstance(scene, canvas);
+
+  // Max camera distance
+  // camera.upperRadiusLimit = 10;
+  // camera.lowerRadiusLimit = 2;
 
   // Basic lighting
   const light = new BABYLON.HemisphericLight(
     "light",
-    new BABYLON.Vector3(1, 1, 0)
+    new BABYLON.Vector3(0, 1, 0)
   );
 
   // Create ground
@@ -45,20 +46,64 @@ function createScene() {
   groundMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
   ground.material = groundMaterial;
 
-  // Load the glassesGuySignLab model
-  BABYLON.SceneLoader.ImportMesh(
-    "",
-    "./",
-    "glassesGuySignLab.glb",
-    scene,
-    function (meshes) {
-      const glassesGuy = meshes[0];
-      glassesGuy.position = new BABYLON.Vector3(0, 0, 0);
-      glassesGuy.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.WORLD);
-    }
-  );
+  console.log("Scene before loading model:", scene);
+  console.log("Scene engine:", scene.getEngine());
 
-  return scene;
+  console.log("Loading avatar model...");
+  try {
+    // Load the glassesGuySignLab model
+    const result = await BABYLON.SceneLoader.ImportMeshAsync(
+      null,
+      "./",
+      "glassesGuySignLab.glb",
+      scene
+    );
+
+    console.log("Model loaded successfully:", result);
+    
+    // Get direct references to the mesh and skeleton
+    const rootMesh = result.meshes[0];
+    const skeleton = result.skeletons[0];
+
+    // Log debug info
+    console.log("Root mesh:", rootMesh);
+    console.log("Skeleton:", skeleton);
+    
+    if (skeleton) {
+      try {
+        // Pass the scene directly, not any promise or wrapper
+        CameraController.setCameraOnBone(scene, rootMesh, skeleton);
+        console.log("Camera attached to bone successfully");
+      } catch (error) {
+        console.error("Error attaching camera to bone:", error);
+      }
+    } else {
+      console.error("No skeleton found in model");
+    }
+  } catch (error) {
+    console.error("Error loading model:", error);
+  }
+
+  console.log("Loading animations...");
+
+  // Load animations
+  try {
+    const animations = await BABYLON.SceneLoader.ImportAnimationsAsync(
+      "",
+      "signs/HALLO-C_250226_1.glb",
+      scene
+    );
+
+    console.log("Animations loaded:", animations);
+    
+    if (scene.animationGroups && scene.animationGroups.length > 0) {
+      console.log(`Found ${scene.animationGroups.length} animation groups`);
+      scene.animationGroups[0].start(true);
+      console.log("Animation started");
+    }
+  } catch (animError) {
+    console.error("Error loading animations:", animError);
+  }
 }
 
 // Function to load multiple signs sequentially
@@ -130,7 +175,7 @@ function loadNextSign(signNames, index) {
     scene,
     (meshes, particleSystems, skeletons, animationGroups) => {
       console.log(`${signName} sign loaded`);
-      
+
       // Rotate the sign model to face the camera
       const root = meshes[0];
       root.position = new BABYLON.Vector3(0, 0, 0);
@@ -148,7 +193,6 @@ function loadNextSign(signNames, index) {
         signAnimation.loopAnimation = false;
 
         loadNextSign(signNames, index + 1);
-
       } else {
         console.error(`No animations found in the ${signName} model`);
         // Dispose meshes since we won't be using them
@@ -197,17 +241,17 @@ function createSimpleUI() {
 }
 
 // Initialize
-scene = createScene();
+createScene().then(() => {
+  // Create UI after scene is ready
+  createSimpleUI();
 
-// Create UI after scene is ready
-createSimpleUI();
+  // Start render loop
+  engine.runRenderLoop(() => {
+    scene.render();
+  });
 
-// Start render loop
-engine.runRenderLoop(() => {
-  scene.render();
-});
-
-// Handle window resize
-window.addEventListener("resize", () => {
-  engine.resize();
+  // Handle window resize
+  window.addEventListener("resize", () => {
+    engine.resize();
+  });
 });

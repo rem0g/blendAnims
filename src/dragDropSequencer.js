@@ -2,24 +2,12 @@ import * as BABYLON from "babylonjs";
 import "babylonjs-loaders";
 import "./dragDropSequencer.css";
 
+// SINGLETON
+
+
 // Canvas and engine setup
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
-
-// Available sign animations - automatically populated from public folder
-// let availableSigns = [
-//   { name: "HALLO", file: "HALLO-C_250226_1.glb" },
-//   { name: "SCHOOL", file: "SCHOOL-D_250226_1.glb" },
-//   { name: "HAARLEM", file: "HAARLEM_250226_1.glb" },
-//   { name: "KIJKEN NAAR ELKAAR", file: "KIJKEN-NAAR-ELKAAR_250228_1.glb" },
-//   { name: "KRIJGEN", file: "KRIJGEN-A_250228_5.glb" },
-//   { name: "LELYSTAD", file: "LELYSTAD_250314_1.glb" },
-//   { name: "LES", file: "LES_250228_2.glb" },
-//   { name: "PROBEREN", file: "PROBEREN-E_250226_2.glb" },
-//   { name: "SCHULDGEVEN", file: "SCHULDGEVEN_250226_1.glb" },
-//   { name: "VRAGEN", file: "VRAGEN-A_250226_1.glb" },
-//   { name: "WACHTEN", file: "WACHTEN-B_250226_1.glb" },
-// ];
 
 // Global variables
 let availableSigns = [];
@@ -61,10 +49,11 @@ function parseSigns() {
     
   });
 
-  console.log(`Parsed all signs`);
-  console.log(signs);
+  // console.log(`Parsed all signs`);
+  // console.log(signs);
   return signs;
 }
+
 
 // Initialize the 3D scene
 function createScene() {
@@ -80,6 +69,10 @@ function createScene() {
     new BABYLON.Vector3(0, 1, 0)
   );
   camera.attachControl(canvas, true);
+
+  // Max camera distance
+  camera.upperRadiusLimit = 10;
+  camera.lowerRadiusLimit = 2;
 
   // Basic lighting
   const light = new BABYLON.HemisphericLight(
