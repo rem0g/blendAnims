@@ -16,10 +16,15 @@ const availableSigns = [
 // Global scene
 const scene = new BABYLON.Scene(engine);
 
+var rotateMesh = function (mesh) {
+  mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+}
+
+
 // Initialize the 3D scene
 async function createScene() {
-  // Create basic scene
-  // scene = new BABYLON.Scene(engine);
+
+  // asset.root.parent
   
   scene.debugLayer.show();
   console.log("Scene created:", scene);
@@ -28,8 +33,8 @@ async function createScene() {
   var camera = CameraController.getInstance(scene, canvas);
 
   // Max camera distance
-  // camera.upperRadiusLimit = 10;
-  // camera.lowerRadiusLimit = 2;
+  camera.upperRadiusLimit = 10;
+  camera.lowerRadiusLimit = 2;
 
   // Basic lighting
   const light = new BABYLON.HemisphericLight(
@@ -38,73 +43,132 @@ async function createScene() {
   );
 
   // Create ground
-  const ground = BABYLON.MeshBuilder.CreateGround("ground", {
-    width: 10,
-    height: 10,
-  });
-  const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
-  groundMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-  ground.material = groundMaterial;
+  // const ground = BABYLON.MeshBuilder.CreateGround("ground", {
+  //   width: 10,
+  //   height: 10,
+  // });
+  // const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
+  // groundMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+  // ground.material = groundMaterial;
 
   console.log("Scene before loading model:", scene);
   console.log("Scene engine:", scene.getEngine());
 
+  loadMesh();
+}
+
+async function loadMesh() {
   console.log("Loading avatar model...");
-  try {
-    // Load the glassesGuySignLab model
-    const result = await BABYLON.SceneLoader.ImportMeshAsync(
-      null,
-      "./",
-      "glassesGuySignLab.glb",
-      scene
-    );
 
-    console.log("Model loaded successfully:", result);
-    
-    // Get direct references to the mesh and skeleton
-    const rootMesh = result.meshes[0];
-    const skeleton = result.skeletons[0];
+  const asset = {
+    fetched: await BABYLON.SceneLoader.ImportMeshAsync(null, "./", "glassesGuySignLab.glb", scene),
+    root: null
+  };
 
-    // Log debug info
-    console.log("Root mesh:", rootMesh);
-    console.log("Skeleton:", skeleton);
-    
-    if (skeleton) {
-      try {
-        // Pass the scene directly, not any promise or wrapper
-        CameraController.setCameraOnBone(scene, rootMesh, skeleton);
-        console.log("Camera attached to bone successfully");
-      } catch (error) {
-        console.error("Error attaching camera to bone:", error);
-      }
-    } else {
-      console.error("No skeleton found in model");
+  asset.root = asset.fetched.meshes[0];
+  asset.fetched.meshes[0].position = new BABYLON.Vector3(0, 0, 0);
+  
+  // Create a root transform node at origin
+  var rootTransformNode = new BABYLON.TransformNode("rootTransformNode", scene);
+  rootTransformNode.position = new BABYLON.Vector3(0, 0, 0);
+  
+  asset.root.parent = rootTransformNode;
+
+  // Rotate the root transform node to face the camera
+  // TODO: Rotate the root transform node to face the camera
+
+  console.log("Root parent:", asset.root.parent);
+  console.log("Root rotation:", asset.root.rotation);
+  console.log("Model loaded successfully:", asset);
+  
+  // Get direct references to the mesh and skeleton
+  const rootMesh = asset.root;
+  const skeleton = asset.fetched.skeletons[0];
+
+  // Log debug info
+  console.log("Root mesh:", rootMesh);
+  console.log("Skeleton:", skeleton);
+  
+  if (skeleton) {
+    try {
+      CameraController.setCameraOnBone(scene, rootMesh, skeleton);
+      console.log("Camera attached to bone successfully");
+    } catch (error) {
+      console.error("Error attaching camera to bone:", error);
     }
-  } catch (error) {
-    console.error("Error loading model:", error);
+  } else {
+    console.error("No skeleton found in model");
   }
 
+
   console.log("Loading animations...");
+
+  // Load animations
+  // try {
+  //   const animations = await BABYLON.SceneLoader.ImportAnimationsAsync(
+  //     "",
+  //     "signs/HALLO-C_250226_1.glb",
+  //     scene
+  //   );
+
+  //   console.log("Animations loaded:", animations);
+    
+  //   if (scene.animationGroups && scene.animationGroups.length > 0) {
+  //     console.log(`Found ${scene.animationGroups.length} animation groups`);
+  //     scene.animationGroups[0].start(true);
+  //     console.log("Animation started");
+  //   }
+  // } catch (animError) {
+  //   console.error("Error loading animations:", animError);
+  // }
+
+  await playAnimation("HALLO");
+  // await playAnimation("SCHOOL");
+}
+
+async function playAnimation(signName) {
+  const signFile = availableSigns.find((s) => s.name === signName)?.file;
+  console.log(`Loading sign file: ${signFile}`);
+
+  // Check if the sign file exists
+  if (!signFile) {
+    console.error(`Sign file not found for: ${signName}`);
+    return;
+  }
 
   // Load animations
   try {
     const animations = await BABYLON.SceneLoader.ImportAnimationsAsync(
       "",
-      "signs/HALLO-C_250226_1.glb",
+      signFile,
       scene
     );
 
     console.log("Animations loaded:", animations);
+
+    const animationGroup = scene.animationGroups[0];
     
     if (scene.animationGroups && scene.animationGroups.length > 0) {
       console.log(`Found ${scene.animationGroups.length} animation groups`);
-      scene.animationGroups[0].start(true);
+      animationGroup.loopAnimation = false;
+      animationGroup.start(false);
       console.log("Animation started");
     }
+
+    let observer = animationGroup.onAnimationEndObservable.add(() => {
+      console.log("Animation ended");
+      animationGroup.stop();
+    });
+
+    // Remove observer
+    animationGroup.onAnimationEndObservable.remove(observer);
+
   } catch (animError) {
     console.error("Error loading animations:", animError);
   }
+
 }
+
 
 // Function to load multiple signs sequentially
 function loadSigns(signNames) {
