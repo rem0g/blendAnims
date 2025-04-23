@@ -45,18 +45,18 @@ function createScene() {
   groundMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
   ground.material = groundMaterial;
 
-  //   // Load the glassesGuySignLab model
-  //   BABYLON.SceneLoader.ImportMesh(
-  //     "",
-  //     "./",
-  //     "glassesGuySignLab.glb",
-  //     scene,
-  //     function (meshes) {
-  //       const glassesGuy = meshes[0];
-  //       glassesGuy.position = new BABYLON.Vector3(0, 0, 0);
-  //       glassesGuy.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.WORLD);
-  //     }
-  //   );
+  // Load the glassesGuySignLab model
+  BABYLON.SceneLoader.ImportMesh(
+    "",
+    "./",
+    "glassesGuySignLab.glb",
+    scene,
+    function (meshes) {
+      const glassesGuy = meshes[0];
+      glassesGuy.position = new BABYLON.Vector3(0, 0, 0);
+      glassesGuy.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.WORLD);
+    }
+  );
 
   return scene;
 }
@@ -130,6 +130,11 @@ function loadNextSign(signNames, index) {
     scene,
     (meshes, particleSystems, skeletons, animationGroups) => {
       console.log(`${signName} sign loaded`);
+      
+      // Rotate the sign model to face the camera
+      const root = meshes[0];
+      root.position = new BABYLON.Vector3(0, 0, 0);
+      root.rotate(BABYLON.Axis.Y, Math.PI, BABYLON.Space.WORLD);
 
       // If animations were loaded, play the first one
       if (animationGroups && animationGroups.length > 0) {
@@ -176,7 +181,7 @@ function createSimpleUI() {
   // Simple button to play SCHOOL
   const schoolButton = document.createElement("button");
   schoolButton.className = "sign-button";
-  schoolButton.textContent = "Play SCHOOL Sign";
+  schoolButton.textContent = "Play";
   schoolButton.style.width = "100%";
   schoolButton.style.padding = "15px";
   schoolButton.style.marginBottom = "20px";

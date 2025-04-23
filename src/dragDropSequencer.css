@@ -1,0 +1,297 @@
+/* Drag and Drop Sign Sequencer CSS */
+
+/* === Base Styles === */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+}
+
+/* === Main App Container === */
+.app-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 600px;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  overflow: hidden;
+  padding: 10px;
+}
+
+/* === Typography === */
+.app-title {
+  font-size: 24px;
+  text-align: center;
+  margin: 10px 0;
+  color: #333;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 0 0 10px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  color: #444;
+}
+
+/* === Layout === */
+.main-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  gap: 15px;
+}
+
+.library-column,
+.sequence-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Important for flex overflow */
+  overflow: hidden;
+}
+
+/* === Search === */
+.search-container {
+  margin-bottom: 10px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #2196F3;
+}
+
+/* === Sign Library === */
+.sign-library {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.sign-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 6px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+  transition: background-color 0.2s;
+}
+
+.sign-item:hover {
+  background-color: #f9f9f9;
+}
+
+.sign-item.playing {
+  background-color: #e3f2fd;
+  border-left: 3px solid #2196F3;
+}
+
+.sign-item.dragging {
+  opacity: 0.7;
+  cursor: grabbing;
+}
+
+.sign-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sign-name {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 3px;
+}
+
+.sign-description {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* === Sequence Area === */
+.sequence-drop-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 2px dashed #ccc;
+  transition: border-color 0.2s;
+}
+
+.sequence-drop-area:hover {
+  border-color: #2196F3;
+}
+
+.sequence-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.empty-message {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-style: italic;
+  text-align: center;
+}
+
+.sequence-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+}
+
+.sequence-item.playing {
+  background-color: #e3f2fd;
+  border-left: 3px solid #2196F3;
+}
+
+.sequence-item.dragging {
+  opacity: 0.7;
+  cursor: grabbing;
+}
+
+.sequence-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sequence-item-name {
+  font-weight: bold;
+}
+
+.sequence-item-index {
+  font-size: 12px;
+  color: #666;
+}
+
+.sequence-item-controls {
+  display: flex;
+  gap: 5px;
+}
+
+/* === Controls === */
+.sequence-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* === Buttons === */
+.play-button,
+.control-button,
+.small-button {
+  border: none;
+  border-radius: 4px;
+  background-color: #2196F3;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.play-button {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.control-button {
+  padding: 10px 15px;
+  font-size: 15px;
+  font-weight: bold;
+  flex: 1;
+}
+
+.small-button {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.play-button:hover,
+.play-sequence-button:hover {
+  background-color: #1976D2;
+}
+
+.clear-sequence-button {
+  background-color: #F44336;
+}
+
+.clear-sequence-button:hover {
+  background-color: #D32F2F;
+}
+
+.remove-button {
+  background-color: #F44336;
+}
+
+.remove-button:hover {
+  background-color: #D32F2F;
+}
+
+/* === Disabled state === */
+.play-button:disabled,
+.control-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* === Responsive Design === */
+@media (min-width: 1024px) {
+  .main-layout {
+    flex-direction: row;
+  }
+  
+  .library-column,
+  .sequence-column {
+    width: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    width: 100%;
+    height: 100vh;
+  }
+} 
