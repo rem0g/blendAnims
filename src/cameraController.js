@@ -1,68 +1,66 @@
-import * as BABYLON from "babylonjs";
+import {
+    ArcRotateCamera,
+    Vector3,
+    MeshBuilder,
+    
+} from "babylonjs";
 
-var CameraController = (function() {
-    var camera;
-    var distance;
-    var position = {x: null, y: null, z: null};
+// Class to control the camera
+class CameraController {
+    constructor(scene, canvas, distance = 2) {
+        this.distance = distance;
+        this.scene = scene;
+        this.canvas = canvas;
 
-    function getPosition() {
-        return camera.position;
+        console.log("Creating new camera");
+        this.camera = new ArcRotateCamera("camera1", -Math.PI / 2, Math.PI / 2.5, distance, new Vector3(0, 0, 0), scene);
+        this.camera.attachControl(canvas, true);
+
+        this.camera.upperRadiusLimit = 10;
+        this.camera.lowerRadiusLimit = 2;
     }
 
-    function setPosition(x, y, z) {
+    getPosition() {
+        return this.camera.position;
+    }
+
+    setPosition(x, y, z) {
         console.log("Setting camera position to: ", x, y, z);
-        position.x = x;
-        position.y = y;
-        position.z = z;
+        this.camera.position.x = x;
+        this.camera.position.y = y;
+        this.camera.position.z = z;
     }
 
     // Function to set the camera on a bone of the target mesh, by default the neck bone (index 4)
-    function setCameraOnBone(scene, targetMesh, skeleton, boneIndex = 4) {
+    setCameraOnBone(targetMesh, skeleton, boneIndex = 4) {
         console.log("Setting camera on bone...");
-        console.log("Scene:", scene);
         
         // Use MeshBuilder instead of Mesh for better parameter handling
-        var sphere = BABYLON.MeshBuilder.CreateSphere("sphere1", {
+        var sphere = MeshBuilder.CreateSphere("sphere1", {
             segments: 16,
             diameter: 2
-        }, scene);
+        }, this.scene);
+
+        sphere.scaling = new Vector3(0.1, 0.1, 0.1);
         
-        sphere.scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
+        const bone = skeleton.bones[boneIndex];
+        
+        // Get the bone's absolute position
+        // TODO: It is hardoded for now
+        // const bonePosition = bone.getAbsolutePosition().clone();
+        const bonePosition = new Vector3(0, 1.5, 0);
+        sphere.position = bonePosition;
+  
+        console.log(`Attaching to bone: ${bone.name} (index ${boneIndex})`);
+        
+        // TODO: Fix this so the sphere is attached to the bone
+        // sphere.attachToBone(bone, targetMesh);
 
-        sphere.attachToBone(skeleton.bones[boneIndex], targetMesh);
-        console.log("Sphere attached to bone: ", skeleton.bones[boneIndex].name);
-        console.log("Target mesh: ", targetMesh.name);
+        // sphere.position = new Vector3(0, 0, 0);
+        // sphere.rotation = new Vector3(0, 0, 0);
 
-        // Set the position and rotation of the sphere relative to the bone
-        sphere.position = new BABYLON.Vector3(0, 0, 0); // Adjust according to your needs
-        sphere.rotation = new BABYLON.Vector3(0, 0, 0); // Adjust according to your needs
-
-        camera.target = sphere;
+        this.camera.target = sphere;
     }
-
-    return {
-        getPosition: getPosition,
-        setPosition: setPosition,
-        setCameraOnBone: setCameraOnBone,
-        getInstance: function(scene, canvas, distance=2) {
-            CameraController.distance = distance;
-
-            if (!camera) {
-                console.log("Creating new camera");
-                camera = new BABYLON.ArcRotateCamera("camera1", -Math.PI / 2, Math.PI / 2.5, distance, new BABYLON.Vector3(0, 0, 0), scene);
-                camera.attachControl(canvas, true);
-
-    
-                const cameraPosition = new BABYLON.Vector3(0, 1, 0);
-
-                setPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-            }
-
-            CameraController.camera = camera;
-
-            return camera;
-        }
-    };
-})();
+}
 
 export default CameraController; 
