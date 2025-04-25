@@ -25,8 +25,6 @@ var rotateMesh = function () {
 
 };
 
-
-
 async function playAnimation(signName) {
   const signFile = availableSigns.find((s) => s.name === signName)?.file;
   console.log(`Loading sign file: ${signFile}`);
@@ -54,24 +52,7 @@ async function playAnimation(signName) {
 
   if (scene.animationGroups && scene.animationGroups.length > 0) {
     console.log(`Found ${scene.animationGroups.length} animation groups`);
-    // scene.animationGroups[0].stop();
-    
-  //   // First clear any existing observers to avoid duplicates
-  //   animationGroup.onAnimationEndObservable.clear();
-    
-  //   // Then add the new observer
-  //   let observer = animationGroup.onAnimationEndObservable.add(() => {
-  //     console.log("Animation ended");
-  //     // Only remove the observer after it has fired
-  //     animationGroup.onAnimationEndObservable.remove(observer);
-  //     animationGroup.stop();
 
-  //     // Dispose the animation group
-  //     animationGroup.dispose();
-  //   });
-    
-  //   // Make sure we're not looping and start the animation
-    // animationGroup.loopAnimation = false;
     animationGroup.start(false);
     console.log("Animation started");
   }
