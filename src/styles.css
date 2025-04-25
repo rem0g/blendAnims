@@ -1,0 +1,35 @@
+.ui-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 250px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.ui-title {
+  text-align: center;
+  margin-top: 0;
+  font-size: 1.5em;
+  margin-bottom: 15px;
+}
+
+.sign-button {
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  background-color: #2a9094;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.sign-button:hover {
+  background-color: #19585a;
+}

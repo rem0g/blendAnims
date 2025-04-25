@@ -27,6 +27,7 @@ class CharacterController {
         return characterMesh;
     }
 
+
     makeRootMesh() {
         const rootMesh = new TransformNode("rootMesh", this.scene);
         this.characterMesh.parent = rootMesh;

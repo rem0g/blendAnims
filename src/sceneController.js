@@ -5,8 +5,7 @@ import {
     MeshBuilder,
     StandardMaterial,
     Color3,
-    Vector3,
-    ArcRotateCamera
+    Vector3
 } from "babylonjs";
 
 import CameraController from "./cameraController.js";
