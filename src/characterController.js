@@ -24,6 +24,7 @@ class CharacterController {
     console.log("Character loaded:", this.character);
 
     // Set camera on bone
+    // TODO: Vragen of dit goed gaat
     this.cameraController.setCameraOnBone(
       this.characterMesh,
       this.character.skeletons[0]
@@ -35,6 +36,14 @@ class CharacterController {
       "glassesGuySignLab.glb",
       this.scene
     );
+
+    console.log("Character mesh loaded:", characterMesh);
+
+    // Always select the character mesh as active mesh
+    characterMesh.meshes.forEach((mesh) => {
+      mesh.alwaysSelectAsActiveMesh = true;
+    });
+
     return characterMesh;
   }
 
@@ -60,7 +69,7 @@ class CharacterController {
 
       // Add this animation to the queue
       this.playAnimation(signFile);
-      
+
       return result;
     } catch (error) {
       console.error("Error in loadAnimation:", error.message);
@@ -72,23 +81,31 @@ class CharacterController {
     return new Promise((resolve, reject) => {
       try {
         // Play the animation
-        if (this.scene.animationGroups && this.scene.animationGroups.length > 0) {
-          console.log(`Found ${this.scene.animationGroups.length} animation groups`);
-        
+        if (
+          this.scene.animationGroups &&
+          this.scene.animationGroups.length > 0
+        ) {
+          console.log(
+            `Found ${this.scene.animationGroups.length} animation groups`
+          );
+
           console.log("Current animation group", this.currentAnimationGroup);
           // Stop any currently playing animation
           if (this.currentAnimationGroup) {
             this.currentAnimationGroup.stop();
-            console.log(`Stopped animation: ${this.currentAnimationGroup.name}`);
+            console.log(
+              `Stopped animation: ${this.currentAnimationGroup.name}`
+            );
           }
 
           // Get the latest animation group (which should be the one we just loaded)
-          const animationGroup = this.scene.animationGroups[this.scene.animationGroups.length - 1];
+          const animationGroup =
+            this.scene.animationGroups[this.scene.animationGroups.length - 1];
           this.currentAnimationGroup = animationGroup;
-          
+
           // Set up position
           this.addAnimationToRootMesh(animationGroup);
-          
+
           // Set up an onAnimationEnd observer to know when the animation completes
           const observer = animationGroup.onAnimationEndObservable.add(() => {
             console.log(`Animation ${animationGroup.name} ended`);
@@ -97,7 +114,11 @@ class CharacterController {
             this.isPlaying = false;
             resolve();
           });
-          
+
+          while (this.isPlaying) {
+            console.log("Animation is already playing, waiting...");
+          }
+
           // Start the animation (not looping)
           animationGroup.start(false);
           this.isPlaying = true;

@@ -1,66 +1,80 @@
-import {
-    ArcRotateCamera,
-    Vector3,
-    MeshBuilder,
-    
-} from "babylonjs";
+import { ArcRotateCamera, Vector3, MeshBuilder } from "babylonjs";
 
 // Class to control the camera
 class CameraController {
-    constructor(scene, canvas, distance = 2) {
-        this.distance = distance;
-        this.scene = scene;
-        this.canvas = canvas;
+  constructor(scene, canvas, distance = 2) {
+    this.distance = distance;
+    this.scene = scene;
+    this.canvas = canvas;
 
-        console.log("Creating new camera");
-        this.camera = new ArcRotateCamera("camera1", -Math.PI / 2, Math.PI / 2.5, distance, new Vector3(0, 0, 0), scene);
-        this.camera.attachControl(canvas, true);
+    console.log("Creating new camera");
+    this.camera = new ArcRotateCamera(
+      "camera1",
+      -Math.PI / 2,
+      Math.PI / 2.5,
+      distance,
+      new Vector3(0, 0, 0),
+      scene
+    );
+    this.camera.attachControl(canvas, true);
 
-        this.camera.upperRadiusLimit = 10;
-        this.camera.lowerRadiusLimit = 2;
-    }
+    this.camera.upperRadiusLimit = 10;
+    this.camera.lowerRadiusLimit = 1;
+    this.camera.minZ = 0.01;
+    this.camera.checkCollisions = false;
+    this.camera.noRotationConstraint = true;
+  }
 
-    getPosition() {
-        return this.camera.position;
-    }
+  getPosition() {
+    return this.camera.position;
+  }
 
-    setPosition(x, y, z) {
-        console.log("Setting camera position to: ", x, y, z);
-        this.camera.position.x = x;
-        this.camera.position.y = y;
-        this.camera.position.z = z;
-    }
+  setPosition(x, y, z) {
+    console.log("Setting camera position to: ", x, y, z);
+    this.camera.position.x = x;
+    this.camera.position.y = y;
+    this.camera.position.z = z;
+  }
 
-    // Function to set the camera on a bone of the target mesh, by default the neck bone (index 4)
-    setCameraOnBone(targetMesh, skeleton, boneIndex = 4) {
-        console.log("Setting camera on bone...");
-        
-        // Use MeshBuilder instead of Mesh for better parameter handling
-        var sphere = MeshBuilder.CreateSphere("sphere1", {
-            segments: 16,
-            diameter: 2
-        }, this.scene);
+  // Function to set the camera on a bone of the target mesh, by default the neck bone (index 4)
+  setCameraOnBone(targetMesh, skeleton, boneIndex = 4) {
+    console.log("Setting camera on bone...");
 
-        sphere.scaling = new Vector3(0.1, 0.1, 0.1);
-        
-        const bone = skeleton.bones[boneIndex];
-        
-        // Get the bone's absolute position
-        // TODO: It is hardoded for now
-        // const bonePosition = bone.getAbsolutePosition().clone();
-        const bonePosition = new Vector3(0, 1.5, 0);
-        sphere.position = bonePosition;
-  
-        console.log(`Attaching to bone: ${bone.name} (index ${boneIndex})`);
-        
-        // TODO: Fix this so the sphere is attached to the bone
-        // sphere.attachToBone(bone, targetMesh);
+    // Use MeshBuilder instead of Mesh for better parameter handling
+    var sphere = MeshBuilder.CreateSphere(
+      "sphere1",
+      {
+        segments: 16,
+        diameter: 2,
+      },
+      this.scene
+    );
 
-        // sphere.position = new Vector3(0, 0, 0);
-        // sphere.rotation = new Vector3(0, 0, 0);
+    sphere.scaling = new Vector3(0.1, 0.1, 0.1);
 
-        this.camera.target = sphere;
-    }
+    const bone = skeleton.bones[boneIndex];
+
+    // Get the bone's absolute position
+    // TODO: It is hardoded for now
+    // const bonePosition = bone.getAbsolutePosition().clone();
+    // const bonePosition = new Vector3(0, 1.5, 0);
+    // sphere.position = bonePosition;
+    
+    console.log(`Bone position: ${bone.getPosition()}`);
+    console.log(`Bone absolute position: ${bone.getAbsolutePosition()}`);
+    console.log(`Sphere position: ${sphere.position}`);
+    
+    console.log(`Attaching to bone: ${bone.name} (index ${boneIndex})`);
+    
+    // TODO: Fix this so the sphere is attached to the bone
+    sphere.attachToBone(bone, targetMesh);
+    
+    // sphere.position = bone.getPosition();
+
+    // sphere.rotation = new Vector3(Math.PI / 2, Math.PI, 0);
+
+    this.camera.target = sphere;
+  }
 }
 
-export default CameraController; 
+export default CameraController;

@@ -1,5 +1,3 @@
-// import {animationController} from "./animationController.js";
-
 // Class to handle UI elements and interactions
 class UIController {
   constructor(scene, availableSigns, characterController) {
@@ -7,50 +5,25 @@ class UIController {
     this.availableSigns = availableSigns;
     this.characterController = characterController;
     this.sequenceItems = [];
+    this.isPlaying = false;
+    this.nextItemId = 1; // For generating unique IDs for sequence items
+    
+    // Bind methods to maintain proper 'this' context
+    this.filterSignLibrary = this.filterSignLibrary.bind(this);
+    this.handleDragOver = this.handleDragOver.bind(this);
+    this.handleDrop = this.handleDrop.bind(this);
+    this.updateSequenceUI = this.updateSequenceUI.bind(this);
+    this.setupSequenceReordering = this.setupSequenceReordering.bind(this);
+    this.removeFromSequence = this.removeFromSequence.bind(this);
+    this.addToSequence = this.addToSequence.bind(this);
+    this.playSequence = this.playSequence.bind(this);
+    this.playSign = this.playSign.bind(this);
   }
 
   init() {
     // Create UI
     this.createDragDropUI();
-    // this.createUI();
-  }
 
-  createUI() {
-    // Title
-    this.container = document.createElement("div");
-    this.container.className = "ui-container";
-    document.body.appendChild(this.container);
-
-    const title = document.createElement("h2");
-    title.textContent = "Sign Player";
-    title.className = "ui-title";
-    this.container.appendChild(title);
-
-    // Create buttons for each available sign
-    this.availableSigns.forEach((sign) => {
-      const button = document.createElement("button");
-      button.className = "sign-button";
-      button.textContent = sign.name;
-      button.dataset.signFile = sign.file; // Store the file path in a data attribute
-
-      // Add click handler to play the sign animation
-      button.addEventListener("click", async () => {
-        console.log(`${sign.name} button clicked`);
-
-        if (this.characterController) {
-          try {
-            // Load and queue the animation
-            await this.characterController.loadAnimation(sign.name);
-          } catch (error) {
-            console.error(`Error loading animation for ${sign.name}:`, error);
-          }
-        } else {
-          console.warn("Character controller not available for animation");
-        }
-      });
-
-      this.container.appendChild(button);
-    });
   }
 
   createDragDropUI() {
@@ -119,15 +92,15 @@ class UIController {
     playSequenceButton.className = "control-button play-sequence-button";
     playSequenceButton.innerHTML = "Play Sequence";
     playSequenceButton.disabled = true;
-    // playSequenceButton.onclick = playSequence;
+    playSequenceButton.onclick = this.playSequence;
     sequenceControls.appendChild(playSequenceButton);
 
     const clearSequenceButton = document.createElement("button");
     clearSequenceButton.className = "control-button clear-sequence-button";
     clearSequenceButton.innerHTML = "Clear All";
     clearSequenceButton.onclick = () => {
-      sequenceItems = [];
-    //   updateSequenceUI();
+      this.sequenceItems = [];
+      this.updateSequenceUI();
     };
     sequenceControls.appendChild(clearSequenceButton);
 
@@ -137,8 +110,8 @@ class UIController {
     const sequenceDropArea = document.createElement("div");
     sequenceDropArea.id = "sequence-drop-area";
     sequenceDropArea.className = "sequence-drop-area";
-    // sequenceDropArea.addEventListener("dragover", handleDragOver);
-    // sequenceDropArea.addEventListener("drop", handleDrop);
+    sequenceDropArea.addEventListener("dragover", this.handleDragOver);
+    sequenceDropArea.addEventListener("drop", this.handleDrop);
 
     // Container for sequence items
     const sequenceContainer = document.createElement("div");
@@ -210,24 +183,292 @@ class UIController {
       playButton.innerHTML = "Play";
       playButton.onclick = async (e) => {
         e.stopPropagation(); // Prevent dragging when clicking play
-        console.log(`${sign.name} button clicked`);
-
-        if (this.characterController) {
-          try {
-            // Load and queue the animation
-            await this.characterController.loadAnimation(sign.name);
-          } catch (error) {
-            console.error(`Error loading animation for ${sign.name}:`, error);
-          }
-        } else {
-          console.warn("Character controller not available for animation");
-        }
+        this.playSign(sign);
       };
       signItem.appendChild(playButton);
 
       // Add to library
       library.appendChild(signItem);
     });
+  }
+
+  // Play a single sign animation
+  async playSign(sign) {
+    console.log(`Playing sign: ${sign.name}`);
+    
+    if (this.characterController) {
+      try {
+        // Load and queue the animation
+        await this.characterController.loadAnimation(sign.name);
+      } catch (error) {
+        console.error(`Error loading animation for ${sign.name}:`, error);
+      }
+    } else {
+      console.warn("Character controller not available for animation");
+    }
+  }
+
+  // Play the full sequence of signs
+  async playSequence() {
+    if (this.isPlaying || this.sequenceItems.length === 0) return;
+    
+    // Disable play button during playback
+    const playButton = document.getElementById("play-sequence-button");
+    if (playButton) {
+      playButton.disabled = true;
+      playButton.innerHTML = "Playing...";
+    }
+    
+    this.isPlaying = true;
+    
+    try {
+      // Play each sign in sequence
+      for (let i = 0; i < this.sequenceItems.length; i++) {
+        const item = this.sequenceItems[i];
+        
+        // Highlight the current item
+        const sequenceItem = document.getElementById(`sequence-item-${item.id}`);
+        if (sequenceItem) {
+          sequenceItem.classList.add("playing");
+        }
+        
+        // Play the sign
+        await this.playSign(item.sign);
+        
+        // Small delay between signs
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Remove highlight
+        if (sequenceItem) {
+          sequenceItem.classList.remove("playing");
+        }
+      }
+    } catch (error) {
+      console.error("Error playing sequence:", error);
+    } finally {
+      this.isPlaying = false;
+      
+      // Re-enable play button
+      if (playButton) {
+        playButton.disabled = false;
+        playButton.innerHTML = "Play Sequence";
+      }
+    }
+  }
+
+  // Update the sequence UI
+  updateSequenceUI() {
+    const sequenceContainer = document.getElementById("sequence-container");
+    sequenceContainer.innerHTML = "";
+
+    if (this.sequenceItems.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "empty-message";
+      emptyMessage.textContent = "Drag signs here to create a sequence";
+      sequenceContainer.appendChild(emptyMessage);
+
+      // Disable play button when sequence is empty
+      const playButton = document.getElementById("play-sequence-button");
+      if (playButton) {
+        playButton.disabled = true;
+      }
+
+      return;
+    }
+
+    // Enable play button when sequence has items
+    const playButton = document.getElementById("play-sequence-button");
+    if (playButton && !this.isPlaying) {
+      playButton.disabled = false;
+    }
+
+    // Create sequence items
+    this.sequenceItems.forEach((item, index) => {
+      const sequenceItem = document.createElement("div");
+      sequenceItem.className = "sequence-item";
+      sequenceItem.id = `sequence-item-${item.id}`;
+      sequenceItem.dataset.id = item.id;
+
+      // Add drag-to-reorder functionality
+      sequenceItem.draggable = true;
+      sequenceItem.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("application/sequence-item", item.id.toString());
+        sequenceItem.classList.add("dragging");
+      });
+
+      sequenceItem.addEventListener("dragend", () => {
+        sequenceItem.classList.remove("dragging");
+      });
+      
+      // Add dragover handler for reordering
+      sequenceItem.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const draggingItem = document.querySelector(".dragging");
+        if (!draggingItem) return;
+        
+        const box = sequenceItem.getBoundingClientRect();
+        const mouseY = e.clientY;
+        
+        if (mouseY < box.top + box.height / 2) {
+          sequenceContainer.insertBefore(draggingItem, sequenceItem);
+        } else {
+          sequenceContainer.insertBefore(draggingItem, sequenceItem.nextSibling);
+        }
+      });
+
+      // Sign name and info
+      const signInfo = document.createElement("div");
+      signInfo.className = "sequence-item-info";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "sequence-item-name";
+      nameSpan.textContent = item.sign.name;
+      signInfo.appendChild(nameSpan);
+
+      const indexSpan = document.createElement("span");
+      indexSpan.className = "sequence-item-index";
+      indexSpan.textContent = `#${index + 1}`;
+      signInfo.appendChild(indexSpan);
+
+      sequenceItem.appendChild(signInfo);
+
+      // Controls
+      const controls = document.createElement("div");
+      controls.className = "sequence-item-controls";
+
+      // Play button
+      const playButton = document.createElement("button");
+      playButton.className = "play-button small-button";
+      playButton.innerHTML = "▶";
+      playButton.title = `Play "${item.sign.name}"`;
+      playButton.onclick = () => this.playSign(item.sign);
+      controls.appendChild(playButton);
+
+      // Remove button
+      const removeButton = document.createElement("button");
+      removeButton.className = "remove-button small-button";
+      removeButton.innerHTML = "×";
+      removeButton.title = "Remove from sequence";
+      removeButton.onclick = () => this.removeFromSequence(item.id);
+      controls.appendChild(removeButton);
+
+      sequenceItem.appendChild(controls);
+      sequenceContainer.appendChild(sequenceItem);
+    });
+
+    // Add drop handler to sequence container for reordering
+    sequenceContainer.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const itemId = e.dataTransfer.getData("application/sequence-item");
+      if (itemId) {
+        // Reordering logic - already handled by the dragover event
+        this.updateSequenceOrder();
+      }
+    });
+    
+    // Make the empty parts of the container accept drops too
+    sequenceContainer.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const draggingItem = document.querySelector(".dragging");
+      if (!draggingItem) return;
+      
+      // If not over another item, append to the end
+      const items = Array.from(sequenceContainer.querySelectorAll(".sequence-item:not(.dragging)"));
+      const mouseY = e.clientY;
+      
+      // Find the closest item below the cursor
+      const closestItem = items.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = mouseY - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+      
+      if (closestItem) {
+        sequenceContainer.insertBefore(draggingItem, closestItem);
+      } else {
+        sequenceContainer.appendChild(draggingItem);
+      }
+    });
+  }
+
+  // Update the sequence data order based on the DOM order
+  updateSequenceOrder() {
+    const newOrder = [];
+    document.querySelectorAll(".sequence-item").forEach((item) => {
+      const id = parseInt(item.dataset.id);
+      const sequenceItem = this.sequenceItems.find((i) => i.id === id);
+      if (sequenceItem) {
+        newOrder.push(sequenceItem);
+      }
+    });
+    
+    this.sequenceItems = newOrder;
+  }
+
+  // Setup the logic for reordering sequence items via drag and drop
+  setupSequenceReordering() {
+    const sequenceContainer = document.getElementById("sequence-container");
+    
+    // Add drop handler to update the internal array order
+    sequenceContainer.addEventListener("drop", (e) => {
+      e.preventDefault();
+      this.updateSequenceOrder();
+    });
+  }
+
+  // Remove an item from the sequence
+  removeFromSequence(itemId) {
+    this.sequenceItems = this.sequenceItems.filter((item) => item.id !== itemId);
+    this.updateSequenceUI();
+  }
+
+  // Handle drag over
+  handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  }
+
+  // Handle dropping a sign into the sequence area
+  handleDrop(e) {
+    e.preventDefault();
+
+    // Check if this is a reordering operation
+    const sequenceItemId = e.dataTransfer.getData("application/sequence-item");
+    if (sequenceItemId) {
+      // Reordering is handled by the updateSequenceOrder method
+      this.updateSequenceOrder();
+      return;
+    }
+
+    // Otherwise, this is adding a new sign from the library
+    const signName = e.dataTransfer.getData("text/plain");
+    if (!signName) return;
+    
+    const sign = this.availableSigns.find(s => s.name === signName);
+    if (!sign) return;
+
+    // Add to sequence
+    this.addToSequence(sign);
+  }
+
+  // Add a sign to the sequence
+  addToSequence(sign) {
+    // Generate a unique ID for this sequence item
+    const itemId = this.nextItemId++;
+    
+    // Add to our sequence data
+    this.sequenceItems.push({
+      id: itemId,
+      sign: sign
+    });
+    
+    // Update the UI
+    this.updateSequenceUI();
   }
 }
 

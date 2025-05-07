@@ -49,8 +49,6 @@ function parseSigns() {
     
   });
 
-  // console.log(`Parsed all signs`);
-  // console.log(signs);
   return signs;
 }
 

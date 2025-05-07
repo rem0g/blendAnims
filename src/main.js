@@ -17,12 +17,11 @@ BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (loader) {
 
 // Make scene
 const {canvas, engine, scene, cameraController, light, ground} = await createScene();
-// scene.debugLayer.show();
+
 console.log("Scene created:", scene);
 
 const cameraPosition = cameraController.getPosition();
 
-// TODO: Fix this so the camera is not hardcoded
 cameraController.setPosition(cameraPosition.x, cameraPosition.y + 1, cameraPosition.z);
 
 // Initialize character controller
@@ -36,6 +35,8 @@ uiController.init();
 // Load an initial animation as an example (optional)
 // await characterController.loadAnimation('HALLO');
 
+
+scene.debugLayer.show();
 
 // Render
 engine.runRenderLoop(function () {
