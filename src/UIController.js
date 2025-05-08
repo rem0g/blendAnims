@@ -200,6 +200,7 @@ class UIController {
       try {
         // Load and queue the animation
         await this.characterController.loadAnimation(sign.name);
+        await this.characterController.playAnimation(sign.name);
       } catch (error) {
         console.error(`Error loading animation for ${sign.name}:`, error);
       }
@@ -234,9 +235,6 @@ class UIController {
         
         // Play the sign
         await this.playSign(item.sign);
-        
-        // Small delay between signs
-        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Remove highlight
         if (sequenceItem) {

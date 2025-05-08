@@ -67,9 +67,6 @@ class CharacterController {
 
       console.log("Animation loaded:", result);
 
-      // Add this animation to the queue
-      this.playAnimation(signFile);
-
       return result;
     } catch (error) {
       console.error("Error in loadAnimation:", error.message);
@@ -115,12 +112,12 @@ class CharacterController {
             resolve();
           });
 
-          while (this.isPlaying) {
-            console.log("Animation is already playing, waiting...");
-          }
+          
 
           // Start the animation (not looping)
           animationGroup.start(false);
+
+          
           this.isPlaying = true;
           console.log(`Animation ${animationGroup.name} started`);
         } else {
