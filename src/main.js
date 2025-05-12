@@ -3,6 +3,7 @@ import "babylonjs-loaders";
 
 import { createScene } from "./sceneController.js";
 import CharacterController from "./characterController.js";
+import AnimationController from "./animationController.js";
 import UIController from "./UIController.js";
 import { availableSigns } from "./availableSigns.js";
 import { GLTFLoaderAnimationStartMode } from "babylonjs-loaders";
@@ -24,12 +25,16 @@ const cameraPosition = cameraController.getPosition();
 
 cameraController.setPosition(cameraPosition.x, cameraPosition.y + 1, cameraPosition.z);
 
+const isPlaying = false;
+
 // Initialize character controller
-const characterController = new CharacterController(scene, cameraController);
+const characterController = new CharacterController(scene, cameraController, isPlaying);
 await characterController.init();
 
+const animationController = new AnimationController(scene, characterController, isPlaying);
+
 // Initialize the UI controller and pass the character controller to it
-const uiController = new UIController(scene, availableSigns, characterController);
+const uiController = new UIController(scene, availableSigns, characterController, animationController, isPlaying);
 uiController.init();
 
 // Load an initial animation as an example (optional)

@@ -1,11 +1,12 @@
 // Class to handle UI elements and interactions
 class UIController {
-  constructor(scene, availableSigns, characterController) {
+  constructor(scene, availableSigns, characterController, animationController, isPlaying) {
     this.scene = scene;
     this.availableSigns = availableSigns;
     this.characterController = characterController;
+    this.animationController = animationController;
     this.sequenceItems = [];
-    this.isPlaying = false;
+    this.isPlaying = isPlaying; // Flag to indicate if a sequence is currently playing
     this.nextItemId = 1; // For generating unique IDs for sequence items
     
     // Bind methods to maintain proper 'this' context
@@ -16,13 +17,13 @@ class UIController {
     this.setupSequenceReordering = this.setupSequenceReordering.bind(this);
     this.removeFromSequence = this.removeFromSequence.bind(this);
     this.addToSequence = this.addToSequence.bind(this);
-    this.playSequence = this.playSequence.bind(this);
-    this.playSign = this.playSign.bind(this);
   }
 
   init() {
     // Create UI
+    this.animationController.init(this.sequenceItems);
     this.createDragDropUI();
+
 
   }
 
@@ -92,7 +93,9 @@ class UIController {
     playSequenceButton.className = "control-button play-sequence-button";
     playSequenceButton.innerHTML = "Play Sequence";
     playSequenceButton.disabled = true;
-    playSequenceButton.onclick = this.playSequence;
+    playSequenceButton.onclick = () => {
+      this.animationController.playSequence(this.sequenceItems);
+    };
     sequenceControls.appendChild(playSequenceButton);
 
     const clearSequenceButton = document.createElement("button");
@@ -183,7 +186,9 @@ class UIController {
       playButton.innerHTML = "Play";
       playButton.onclick = async (e) => {
         e.stopPropagation(); // Prevent dragging when clicking play
-        this.playSign(sign);
+        console.log(`Playing sign: ${sign.name}`);
+        this.animationController.playSign(sign.name);
+
       };
       signItem.appendChild(playButton);
 
@@ -192,67 +197,8 @@ class UIController {
     });
   }
 
-  // Play a single sign animation
-  async playSign(sign) {
-    console.log(`Playing sign: ${sign.name}`);
-    
-    if (this.characterController) {
-      try {
-        // Load and queue the animation
-        await this.characterController.loadAnimation(sign.name);
-        await this.characterController.playAnimation(sign.name);
-      } catch (error) {
-        console.error(`Error loading animation for ${sign.name}:`, error);
-      }
-    } else {
-      console.warn("Character controller not available for animation");
-    }
-  }
 
-  // Play the full sequence of signs
-  async playSequence() {
-    if (this.isPlaying || this.sequenceItems.length === 0) return;
-    
-    // Disable play button during playback
-    const playButton = document.getElementById("play-sequence-button");
-    if (playButton) {
-      playButton.disabled = true;
-      playButton.innerHTML = "Playing...";
-    }
-    
-    this.isPlaying = true;
-    
-    try {
-      // Play each sign in sequence
-      for (let i = 0; i < this.sequenceItems.length; i++) {
-        const item = this.sequenceItems[i];
-        
-        // Highlight the current item
-        const sequenceItem = document.getElementById(`sequence-item-${item.id}`);
-        if (sequenceItem) {
-          sequenceItem.classList.add("playing");
-        }
-        
-        // Play the sign
-        await this.playSign(item.sign);
-        
-        // Remove highlight
-        if (sequenceItem) {
-          sequenceItem.classList.remove("playing");
-        }
-      }
-    } catch (error) {
-      console.error("Error playing sequence:", error);
-    } finally {
-      this.isPlaying = false;
-      
-      // Re-enable play button
-      if (playButton) {
-        playButton.disabled = false;
-        playButton.innerHTML = "Play Sequence";
-      }
-    }
-  }
+  
 
   // Update the sequence UI
   updateSequenceUI() {
@@ -323,6 +269,7 @@ class UIController {
       nameSpan.textContent = item.sign.name;
       signInfo.appendChild(nameSpan);
 
+      // Index number displayed in sequence block
       const indexSpan = document.createElement("span");
       indexSpan.className = "sequence-item-index";
       indexSpan.textContent = `#${index + 1}`;
@@ -339,7 +286,7 @@ class UIController {
       playButton.className = "play-button small-button";
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
-      playButton.onclick = () => this.playSign(item.sign);
+      playButton.onclick = () => this.animationController.playSign(item.sign);
       controls.appendChild(playButton);
 
       // Remove button

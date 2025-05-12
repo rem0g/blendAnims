@@ -8,10 +8,10 @@ import { availableSigns } from "./availableSigns.js";
 
 // Class to load and control the character
 class CharacterController {
-  constructor(scene, cameraController) {
+  constructor(scene, cameraController, isPlaying) {
     this.scene = scene;
     this.cameraController = cameraController;
-    this.isPlaying = false;
+    this.isPlaying = isPlaying;
     this.animationQueue = [];
     this.currentAnimationGroup = null;
   }
