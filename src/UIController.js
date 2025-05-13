@@ -24,7 +24,6 @@ class UIController {
     this.animationController.init(this.sequenceItems);
     this.createDragDropUI();
 
-
   }
 
   createDragDropUI() {

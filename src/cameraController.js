@@ -55,23 +55,9 @@ class CameraController {
     const bone = skeleton.bones[boneIndex];
 
     // Get the bone's absolute position
-    // TODO: It is hardoded for now
-    // const bonePosition = bone.getAbsolutePosition().clone();
-    // const bonePosition = new Vector3(0, 1.5, 0);
-    // sphere.position = bonePosition;
-    
-    console.log(`Bone position: ${bone.getPosition()}`);
-    console.log(`Bone absolute position: ${bone.getAbsolutePosition()}`);
-    console.log(`Sphere position: ${sphere.position}`);
-    
-    console.log(`Attaching to bone: ${bone.name} (index ${boneIndex})`);
-    
-    // TODO: Fix this so the sphere is attached to the bone
+    const bonePosition = new Vector3(0, 1, -1.95);
+    sphere.position = bonePosition;
     sphere.attachToBone(bone, targetMesh);
-    
-    // sphere.position = bone.getPosition();
-
-    // sphere.rotation = new Vector3(Math.PI / 2, Math.PI, 0);
 
     this.camera.target = sphere;
   }

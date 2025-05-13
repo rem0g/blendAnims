@@ -24,7 +24,6 @@ class CharacterController {
     console.log("Character loaded:", this.character);
 
     // Set camera on bone
-    // TODO: Vragen of dit goed gaat
     this.cameraController.setCameraOnBone(
       this.characterMesh,
       this.character.skeletons[0]
@@ -136,7 +135,7 @@ class CharacterController {
   addAnimationToRootMesh(animationGroup) {
     animationGroup.parent = this.rootMesh;
 
-    // rotate the root mesh 90 degrees on the X axis
+    // Rotate the root mesh 90 degrees on the X axis
     this.rootMesh.rotation = new Vector3(Math.PI / 2, Math.PI, 0);
     this.rootMesh.position = new Vector3(0, 0, -0.25);
 
