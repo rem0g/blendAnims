@@ -46,6 +46,7 @@ class CharacterController {
     return characterMesh;
   }
 
+  // Load a single animation
   async loadAnimation(signName) {
     try {
       // Get the sign file from the availableSigns array
@@ -73,6 +74,20 @@ class CharacterController {
     }
   }
 
+  // Load multiple animations and add them to the queue
+  async loadMultipleAnimations(signNames) {
+    for (const signName of signNames) {
+      const animation = await this.loadAnimation(signName);
+      if (animation) {
+        this.animationQueue.push(animation);
+      }
+    }
+    console.log("All animations loaded:", this.animationQueue);
+    return this.animationQueue;
+  }
+
+
+  // Add the animation to the root mesh and play it
   async playAnimation() {
     return new Promise((resolve, reject) => {
       try {
@@ -132,16 +147,20 @@ class CharacterController {
     });
   }
 
+  // Add the animation to the root mesh and set its position
   addAnimationToRootMesh(animationGroup) {
     animationGroup.parent = this.rootMesh;
 
     // Rotate the root mesh 90 degrees on the X axis
     this.rootMesh.rotation = new Vector3(Math.PI / 2, Math.PI, 0);
+
+    // Adjust the position of the root mesh to be in the center of the scene
     this.rootMesh.position = new Vector3(0, 0, -0.25);
 
     return animationGroup;
   }
 
+  // Create a root mesh to hold the character and its animations
   makeRootMesh() {
     const rootMesh = new TransformNode("rootMesh", this.scene);
     this.characterMesh.parent = rootMesh;
