@@ -55,9 +55,9 @@ class CameraController {
     const bone = skeleton.bones[boneIndex];
 
     // Get the bone's absolute position
-    const bonePosition = new Vector3(0, 1, -1.95);
+    const bonePosition = new Vector3(0, 1.6, 0);
     sphere.position = bonePosition;
-    sphere.attachToBone(bone, targetMesh);
+    // sphere.attachToBone(bone, targetMesh);
 
     this.camera.target = sphere;
   }
