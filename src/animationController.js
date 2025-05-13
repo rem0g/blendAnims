@@ -91,25 +91,27 @@ class AnimationController {
     // Add all animations to one animation group
     try {
       // Load both animations
-      // const animations = await this.characterController.loadMultipleAnimations([
-      //   signName1,
-      //   signName2,
-      // ]);
+      const animations = await this.characterController.loadMultipleAnimations([
+        signName1,
+        signName2,
+      ]);
+
+      // this.characterController.playAnimation();
       // console.log("Loaded animations:", animations);
 
-      const animation1 = await this.characterController.loadAnimation(
-        signName1
-      );
-      const animation2 = this.characterController.loadAnimation(signName2);
+      // const animation1 = await this.characterController.loadAnimation(
+      //   signName1
+      // );
+      // const animation2 = this.characterController.loadAnimation(signName2);
 
-      console.log("Animation queue:", animation1);
+      // console.log("Animation queue:", animation1);
 
 
-      const animationGroup1 =
-        this.characterController.getAnimationGroup(signName1);
-      animationGroup1.enableBlending = true;
-      animationGroup1.blendingSpeed = this.transitionDuration;
-      console.log("Animation group 1:", animationGroup1);
+      // const animationGroup1 =
+      //   this.characterController.getAnimationGroup(signName1);
+      // animationGroup1.enableBlending = true;
+      // animationGroup1.blendingSpeed = this.transitionDuration;
+      // console.log("Animation group 1:", animationGroup1);
 
       // Create a promise that resolves when the first animation finishes
       // const animationComplete = new Promise((resolve) => {

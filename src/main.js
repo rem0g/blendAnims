@@ -34,13 +34,13 @@ await characterController.init();
 const animationController = new AnimationController(scene, characterController, isPlaying);
 
 // Initialize the UI controller and pass the character controller to it
-const uiController = new UIController(scene, availableSigns, characterController, animationController, isPlaying);
-uiController.init();
+// const uiController = new UIController(scene, availableSigns, characterController, animationController, isPlaying);
+// uiController.init();
 
 // Load an initial animation as an example (optional)
 // await characterController.loadAnimation('HALLO');
 
-// await animationController.blendAnimations('HALLO', 'LELYSTAD');
+await animationController.blendAnimations('HALLO', 'HAARLEM');
 
 
 scene.debugLayer.show();

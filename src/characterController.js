@@ -58,6 +58,7 @@ class CharacterController {
       }
 
       const signFile = sign.file;
+      console.log("Loading animation:", signFile);
 
       const result = await SceneLoader.ImportAnimationsAsync(
         "",
@@ -65,10 +66,13 @@ class CharacterController {
         this.scene,
         {
           overwriteAnimations: false, // This prevents existing animations from being overwritten
+          animationGroupNamePrefix: "Temp_" + Math.random().toString(36).slice(2)
         }
       );
 
-      console.log("Animation loaded:", result);
+      result.animationGroups[0].name = signName;
+
+      console.log("Result before returning:", result);
 
       // Add to the animation queue
       if (result.animationGroups && result.animationGroups.length > 0) {
@@ -84,8 +88,7 @@ class CharacterController {
       } else {
         console.warn(`No animation groups found in animation: ${signName}`);
       }
-
-      return this.animationQueue;
+      return result;
     } catch (error) {
       console.error("Error in loadAnimation:", error.message);
       return null;
@@ -94,12 +97,33 @@ class CharacterController {
 
   // Load multiple animations and add them to the queue
   async loadMultipleAnimations(signNames) {
+
+    // Create a new AnimationGroup to combine all animations
+    const combinedAnimationGroup = new BABYLON.AnimationGroup("combinedAnimations");
+
+
+    const animationResult = [];
+
     for (const signName of signNames) {
-      await this.loadAnimation(signName);
+      console.log("Loading animation:", signName);
+        console.log("Loading:", signName);
+        const result = await this.loadAnimation(signName);
+        animationResult.push(result);
+        console.log("result after loadAnimation:", result);
+        console.log("Loaded:", signName);
     }
 
-    console.log("All animations loaded:", this.animationQueue);
-    return this.animationQueue;
+    console.log("Loaded multiple animations:", animationResult);
+
+    // result.forEach((res) => {
+    //     if (res.animationGroups && res.animationGroups.length > 0) {
+    //         console.log(res.animationGroups[0])
+    //     }
+    // });
+
+
+    // console.log("All animations loaded:", this.animationQueue);
+    // return this.animationQueue;
   }
 
   // Add the animation to the root mesh and play it
