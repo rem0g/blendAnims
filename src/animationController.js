@@ -91,56 +91,30 @@ class AnimationController {
     // Add all animations to one animation group
     try {
       // Load both animations
-      const animations = await this.characterController.loadMultipleAnimations([
+      const animationGroups = await this.characterController.loadMultipleAnimations([
         signName1,
         signName2,
       ]);
 
-      // this.characterController.playAnimation();
-      // console.log("Loaded animations:", animations);
+      const animationGroup1 = animationGroups[0].animationGroups[0];
+      const animationGroup2 = animationGroups[1].animationGroups[0];
 
-      // const animation1 = await this.characterController.loadAnimation(
-      //   signName1
-      // );
-      // const animation2 = this.characterController.loadAnimation(signName2);
+      animationGroup1.enableBlending = true;
+      animationGroup1.blendingSpeed = this.transitionDuration;
 
-      // console.log("Animation queue:", animation1);
+      animationGroup2.enableBlending = true;  
+      animationGroup2.blendingSpeed = this.transitionDuration;
 
+      const observer = animationGroup1.onAnimationGroupEndObservable.add(() => {
+        animationGroup1.onAnimationGroupEndObservable.remove(observer)
 
-      // const animationGroup1 =
-      //   this.characterController.getAnimationGroup(signName1);
-      // animationGroup1.enableBlending = true;
-      // animationGroup1.blendingSpeed = this.transitionDuration;
-      // console.log("Animation group 1:", animationGroup1);
-
-      // Create a promise that resolves when the first animation finishes
-      // const animationComplete = new Promise((resolve) => {
-      //   const observer = animationGroup1.onAnimationEndObservable.add(() => {
-      //     // Remove the observer to prevent memory leaks
-      //     animationGroup1.onAnimationEndObservable.remove(observer);
-      //     console.log("Animation 1 ended");
-      //     resolve();
-      //   });
-      // });
-
-      // this.characterController.playBlendingAnimation(signName1);
-
-      // Wait for the first animation to finish
-      // await animationComplete;
+        this.characterController.playAnimationGroup(animationGroup2);
+      });
+      
+      this.characterController.playAnimationGroup(animationGroup1);
 
 
-      //     const animationGroup2 =
-      //       this.characterController.getAnimationGroup(signName2);
-      //     animationGroup2.enableBlending = true;
-      //     animationGroup2.blendingSpeed = this.transitionDuration;
-      //     console.log("Animation group 2:", animationGroup2);
-      //     this.characterController.playAnimation(signName2);
 
-      //     // Resolve the promise when the second animation ends
-      //     animationGroup2.onAnimationEndObservable.add(() => {
-      //       console.log("Animation 2 ended");
-      //     });
-      // });
     } catch (error) {
       console.error(`Error loading animations for blending:`, error);
       return;

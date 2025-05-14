@@ -12,7 +12,7 @@ class CharacterController {
     this.scene = scene;
     this.cameraController = cameraController;
     this.isPlaying = isPlaying;
-    this.animationQueue = [];
+    this.animationGroup = null;
     this.currentAnimationGroup = null;
   }
 
@@ -66,28 +66,29 @@ class CharacterController {
         this.scene,
         {
           overwriteAnimations: false, // This prevents existing animations from being overwritten
-          animationGroupNamePrefix: "Temp_" + Math.random().toString(36).slice(2)
+          animationGroupNamePrefix:
+            "Temp_" + Math.random().toString(36).slice(2),
         }
       );
-
       result.animationGroups[0].name = signName;
 
-      console.log("Result before returning:", result);
-
-      // Add to the animation queue
-      if (result.animationGroups && result.animationGroups.length > 0) {
-        // Set the animation group name to the sign name
-        result.animationGroups[0].name = signName;
-        this.animationQueue.push({
-          SignName: signName,
-          animationGroup: result.animationGroups[0],
-        });
-        console.log(
-          `Animation ${signName} added to queue. Queue length: ${this.animationQueue.length}`
+      // Process all animation groups from this file
+      for (const targetedAnimation of result.animationGroups[0]
+        .targetedAnimations) {
+        this.animationGroup.addTargetedAnimation(
+          targetedAnimation.animation,
+          this.characterMesh
         );
-      } else {
-        console.warn(`No animation groups found in animation: ${signName}`);
       }
+      console.log("Animationgroup:", this.animationGroup);
+
+      console.log(
+        "Result before returning:",
+        signName,
+        signFile,
+        result.animationGroups[0].name
+      );
+
       return result;
     } catch (error) {
       console.error("Error in loadAnimation:", error.message);
@@ -97,33 +98,32 @@ class CharacterController {
 
   // Load multiple animations and add them to the queue
   async loadMultipleAnimations(signNames) {
-
     // Create a new AnimationGroup to combine all animations
-    const combinedAnimationGroup = new BABYLON.AnimationGroup("combinedAnimations");
+    const combinedAnimationGroup = new BABYLON.AnimationGroup(
+      "combinedAnimations"
+    );
 
+    this.animationGroup = combinedAnimationGroup;
+
+    console.log("Animation group created.");
 
     const animationResult = [];
 
     for (const signName of signNames) {
       console.log("Loading animation:", signName);
-        console.log("Loading:", signName);
-        const result = await this.loadAnimation(signName);
-        animationResult.push(result);
-        console.log("result after loadAnimation:", result);
-        console.log("Loaded:", signName);
+      console.log("Loading:", signName);
+      const result = await this.loadAnimation(signName);
+      animationResult.push(result);
+      console.log("result after loadAnimation:", result);
+      console.log("Loaded:", signName);
     }
 
-    console.log("Loaded multiple animations:", animationResult);
+    console.log(
+      "Animation group after loading multiple animations:",
+      animationResult
+    );
 
-    // result.forEach((res) => {
-    //     if (res.animationGroups && res.animationGroups.length > 0) {
-    //         console.log(res.animationGroups[0])
-    //     }
-    // });
-
-
-    // console.log("All animations loaded:", this.animationQueue);
-    // return this.animationQueue;
+    return animationResult;
   }
 
   // Add the animation to the root mesh and play it
@@ -243,6 +243,42 @@ class CharacterController {
           this.isPlaying = false;
           reject("No animation groups found");
         }
+      } catch (error) {
+        console.error("Error playing animation:", error);
+        this.isPlaying = false;
+        reject(error);
+      }
+    });
+  }
+
+  async playAnimationGroup(animationGroup) {
+    return new Promise((resolve, reject) => {
+      try {
+        // Play the animation
+        console.log("Current animation group", this.currentAnimationGroup);
+        // Stop any currently playing animation
+        if (this.currentAnimationGroup) {
+          this.currentAnimationGroup.stop();
+          console.log(`Stopped animation: ${this.currentAnimationGroup.name}`);
+        }
+
+        // Set up position
+        this.addAnimationToRootMesh(animationGroup);
+
+        // Set up an onAnimationEnd observer to know when the animation completes
+        const observer = animationGroup.onAnimationEndObservable.add(() => {
+          console.log(`Animation ${animationGroup.name} ended`);
+          // Remove the observer to prevent memory leaks
+          animationGroup.onAnimationEndObservable.remove(observer);
+          this.isPlaying = false;
+          resolve();
+        });
+
+        // Start the animation (not looping)
+        animationGroup.start(false);
+
+        this.isPlaying = true;
+        console.log(`Animation ${animationGroup.name} started`);
       } catch (error) {
         console.error("Error playing animation:", error);
         this.isPlaying = false;

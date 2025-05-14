@@ -40,7 +40,7 @@ const animationController = new AnimationController(scene, characterController, 
 // Load an initial animation as an example (optional)
 // await characterController.loadAnimation('HALLO');
 
-await animationController.blendAnimations('HALLO', 'HAARLEM');
+await animationController.blendAnimations('hallo', 'hallo');
 
 
 scene.debugLayer.show();

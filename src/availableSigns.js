@@ -11,4 +11,5 @@ export const availableSigns = [
     { name: "SCHULDGEVEN", file: "signs/SCHULDGEVEN_250226_1.glb" },
     { name: "VRAGEN-A", file: "signs/VRAGEN-A_250226_1.glb" },
     { name: "WACHTEN-B", file: "signs/WACHTEN-B_250226_1.glb" },
+    { name: "hallo", file: "signs/hallo.glb" },
   ];
