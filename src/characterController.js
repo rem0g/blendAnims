@@ -3,6 +3,7 @@ import {
   TransformNode,
   Vector3,
   SceneLoader,
+  ImportAnimationsAsync,
 } from "babylonjs";
 import { availableSigns } from "./availableSigns.js";
 
@@ -64,23 +65,32 @@ class CharacterController {
         "",
         signFile,
         this.scene,
-        {
-          overwriteAnimations: false, // This prevents existing animations from being overwritten
-          animationGroupNamePrefix:
-            "Temp_" + Math.random().toString(36).slice(2),
-        }
+        false,
+        BABYLON.SceneLoaderAnimationGroupLoadingMode.NoSync,
+        // null
+        // {
+        //   overwriteAnimations: false, // This prevents existing animations from being overwritten
+        // //   animationGroupNamePrefix:
+        // //     "Temp_" + Math.random().toString(36).slice(2),
+        // }
       );
-      result.animationGroups[0].name = signName;
+      console.log("Animation loaded:", this.scene.animationGroups);
+      console.log("Result:", result, result.animationGroups, this.scene.animationGroups);
 
+      const myAnimation = result.animationGroups.find((x,i)=>x.name === "Unreal Take" && i != 0);
+      console.log("My animation:", myAnimation);
+      myAnimation.name = signName;
+      // console.log(result.animationGroups[0].uniqueId);
+      // result.animationGroups[0].name = signName;
       // Process all animation groups from this file
-      for (const targetedAnimation of result.animationGroups[0]
-        .targetedAnimations) {
-        this.animationGroup.addTargetedAnimation(
-          targetedAnimation.animation,
-          this.characterMesh
-        );
-      }
-      console.log("Animationgroup:", this.animationGroup);
+      // for (const targetedAnimation of result.animationGroups[0]
+      //   .targetedAnimations) {
+      //   // this.animationGroup.addTargetedAnimation(
+      //   //   targetedAnimation.animation,
+      //   //   this.characterMesh
+      //   // );
+      // }
+      // console.log("Animationgroup:", this.animationGroup);
 
       console.log(
         "Result before returning:",
@@ -89,7 +99,7 @@ class CharacterController {
         result.animationGroups[0].name
       );
 
-      return result;
+      return myAnimation;
     } catch (error) {
       console.error("Error in loadAnimation:", error.message);
       return null;
@@ -99,11 +109,11 @@ class CharacterController {
   // Load multiple animations and add them to the queue
   async loadMultipleAnimations(signNames) {
     // Create a new AnimationGroup to combine all animations
-    const combinedAnimationGroup = new BABYLON.AnimationGroup(
-      "combinedAnimations"
-    );
+    // const combinedAnimationGroup = new BABYLON.AnimationGroup(
+    //   "combinedAnimations"
+    // );
 
-    this.animationGroup = combinedAnimationGroup;
+    // this.animationGroup = combinedAnimationGroup;
 
     console.log("Animation group created.");
 
@@ -119,8 +129,7 @@ class CharacterController {
     }
 
     console.log(
-      "Animation group after loading multiple animations:",
-      animationResult
+      "Animation group after loading multiple animations:", animationResult
     );
 
     return animationResult;

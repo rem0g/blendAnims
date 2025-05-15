@@ -96,18 +96,19 @@ class AnimationController {
         signName2,
       ]);
 
-      const animationGroup1 = animationGroups[0].animationGroups[0];
-      const animationGroup2 = animationGroups[1].animationGroups[0];
+      const animationGroup1 = animationGroups[0];
+      const animationGroup2 = animationGroups[1];
+
 
       animationGroup1.enableBlending = true;
       animationGroup1.blendingSpeed = this.transitionDuration;
 
       animationGroup2.enableBlending = true;  
       animationGroup2.blendingSpeed = this.transitionDuration;
+      // animationGroup2.normalize(60, 100);
 
       const observer = animationGroup1.onAnimationGroupEndObservable.add(() => {
         animationGroup1.onAnimationGroupEndObservable.remove(observer)
-
         this.characterController.playAnimationGroup(animationGroup2);
       });
       
