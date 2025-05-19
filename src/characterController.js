@@ -93,75 +93,7 @@ class CharacterController {
     return animationResult;
   }
 
-  // Add the animation to the root mesh and play it
-  async playBlendingAnimation(signName) {
-    return new Promise((resolve, reject) => {
-      try {
-        // Play the animation
-        if (this.animationQueue && this.animationQueue.length > 0) {
-          console.log(`Found ${this.animationQueue.length} animation groups`);
-
-          // Stop any currently playing animation
-          if (this.currentAnimationGroup) {
-            this.currentAnimationGroup.stop();
-            console.log(
-              `Stopped animation: ${this.currentAnimationGroup.name}`
-            );
-          }
-
-          // Get the latest animation group (which should be the one we just loaded)
-          // const animationGroup =
-          //   this.scene.animationGroups[this.scene.animationGroups.length - 1];
-
-          // Find the animation group by name
-          const animationGroup2 = this.animationQueue.find(
-            (group) => group.SignName === signName
-          )?.animationGroup;
-          console.log("Animation group found:", animationGroup2);
-
-          if (!animationGroup2) {
-            console.error(`Animation group not found: ${signName}`);
-            this.isPlaying = false;
-            reject(`Animation group not found: ${signName}`);
-            return;
-          }
-
-          this.currentAnimationGroup = animationGroup2;
-          console.log("Current animation group", this.currentAnimationGroup);
-
-          // Set up position
-          this.addAnimationToRootMesh(this.currentAnimationGroup);
-
-          // Set up an onAnimationEnd observer to know when the animation completes
-          const observer =
-            this.currentAnimationGroup.onAnimationEndObservable.add(() => {
-              console.log(`Animation ${this.currentAnimationGroup.name} ended`);
-              // Remove the observer to prevent memory leaks
-              this.currentAnimationGroup.onAnimationEndObservable.remove(
-                observer
-              );
-              this.isPlaying = false;
-              resolve();
-            });
-
-          // Start the animation (not looping)
-          this.currentAnimationGroup.start(false);
-
-          this.isPlaying = true;
-          console.log(`Animation ${this.currentAnimationGroup.name} started`);
-        } else {
-          console.error("No animation groups found in the scene");
-          this.isPlaying = false;
-          reject("No animation groups found");
-        }
-      } catch (error) {
-        console.error("Error playing animation:", error);
-        this.isPlaying = false;
-        reject(error);
-      }
-    });
-  }
-
+  // Play a single animation
   async playAnimation() {
     return new Promise((resolve, reject) => {
       try {
