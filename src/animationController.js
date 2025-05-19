@@ -9,10 +9,6 @@ class AnimationController {
   // Initialize the AnimationController
   init(sequenceItems) {
     this.sequenceItems = sequenceItems;
-    console.log(
-      "AnimationController initialized with sequence items:",
-      this.sequenceItems
-    );
   }
 
   // Play a single sign animation
@@ -80,40 +76,107 @@ class AnimationController {
     }
   }
 
-  async blendAnimations(signName1, signName2) {
-    console.log(`Blending animations: ${signName1} and ${signName2}`);
-
+  async blendAnimations(signNames) {
     if (!this.characterController) {
       console.warn("Character controller not available for blending");
       return;
     }
 
-    // Add all animations to one animation group
-    try {
-      // Load both animations
-      const animationGroups =
-        await this.characterController.loadMultipleAnimations([
-          signName1,
-          signName2,
-        ]);
+    if (this.isPlaying) {
+      console.warn("Animation is already playing, cannot blend");
+      return;
+    }
 
-      const animationGroup1 = animationGroups[0];
-      const animationGroup2 = animationGroups[1];
+    // Disable play button during playback
+    const playButton = document.getElementById("play-sequence-button");
+    if (playButton) {
+      playButton.disabled = true;
+      playButton.innerHTML = "Playing...";
+    }
+
+    this.isPlaying = true;
+
+    try {
+      // Load all animation groups for blending
+      const animationGroups =
+        await this.characterController.loadMultipleAnimations(signNames);
+
+      if (!animationGroups || animationGroups.length == 0) {
+        console.warn("No animation groups loaded for blending");
+        return;
+      }
 
       this.scene.animationPropertiesOverride =
         new BABYLON.AnimationPropertiesOverride();
       this.scene.animationPropertiesOverride.enableBlending = true;
       this.scene.animationPropertiesOverride.blendingSpeed = 0.05;
 
-      const observer = animationGroup1.onAnimationGroupEndObservable.add(() => {
-        animationGroup1.onAnimationGroupEndObservable.remove(observer);
-        this.characterController.playAnimationGroup(animationGroup2);
-      });
+      let currentIndex = 0;
 
-      this.characterController.playAnimationGroup(animationGroup1);
+      // Function to play the next animation in sequence
+      const playNextAnimation = () => {
+        // Remove any existing observer
+        if (this._currentAnimObserver) {
+          animationGroups[
+            currentIndex - 1
+          ].onAnimationGroupEndObservable.remove(this._currentAnimObserver);
+          this._currentAnimObserver = null;
+        }
+
+        // If we've played all animations, we're done
+        if (currentIndex >= animationGroups.length) {
+          console.log("Finished playing all animations in sequence");
+          return;
+        }
+
+        // Play the current animation
+        const currentAnimation = animationGroups[currentIndex];
+        
+        // Highlight the current item
+        const sequenceItem = document.getElementById(
+          `sequence-item-${currentIndex + 1}`
+        );
+        if (sequenceItem) {
+          sequenceItem.classList.add("playing");
+        }
+
+        // Set up observer for when this animation ends
+        if (currentIndex < animationGroups.length - 1) {
+          this._currentAnimObserver =
+            currentAnimation.onAnimationGroupEndObservable.add(() => {
+              currentIndex++;
+              // Remove highlight
+              if (sequenceItem) {
+                sequenceItem.classList.remove("playing");
+              }
+              playNextAnimation();
+            });
+        } else {
+          // Last animation, remove highlight when it ends
+          this._currentAnimObserver =
+            currentAnimation.onAnimationGroupEndObservable.add(() => {
+              if (sequenceItem) {
+                sequenceItem.classList.remove("playing");
+              }
+            });
+        }
+
+        this.characterController.playAnimationGroup(currentAnimation);
+      };
+
+      // Start the animation sequence
+      playNextAnimation();
     } catch (error) {
       console.error(`Error loading animations for blending:`, error);
       return;
+    } finally {
+      this.isPlaying = false;
+
+      // Re-enable play button
+      if (playButton) {
+        playButton.disabled = false;
+        playButton.innerHTML = "Play Sequence";
+      }
     }
   }
 }

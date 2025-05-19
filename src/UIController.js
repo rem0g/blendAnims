@@ -93,7 +93,10 @@ class UIController {
     playSequenceButton.innerHTML = "Play Sequence";
     playSequenceButton.disabled = true;
     playSequenceButton.onclick = () => {
-      this.animationController.playSequence(this.sequenceItems);
+      // this.animationController.playSequence(this.sequenceItems);
+
+      // Blend animation for the sequence
+      this.animationController.blendAnimations(this.sequenceItems.map(item => item.sign.name));
     };
     sequenceControls.appendChild(playSequenceButton);
 
@@ -196,8 +199,6 @@ class UIController {
     });
   }
 
-
-  
 
   // Update the sequence UI
   updateSequenceUI() {

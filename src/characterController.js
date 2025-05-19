@@ -67,38 +67,11 @@ class CharacterController {
         this.scene,
         false,
         BABYLON.SceneLoaderAnimationGroupLoadingMode.NoSync,
-        // null
-        // {
-        //   overwriteAnimations: false, // This prevents existing animations from being overwritten
-        // //   animationGroupNamePrefix:
-        // //     "Temp_" + Math.random().toString(36).slice(2),
-        // }
       );
-      console.log("Animation loaded:", this.scene.animationGroups);
-      console.log("Result:", result, result.animationGroups, this.scene.animationGroups);
 
       const myAnimation = result.animationGroups.find((x,i)=>x.name === "Unreal Take" && i != 0);
       myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
-      console.log("My animation:", myAnimation);
       myAnimation.name = signName;
-      // console.log(result.animationGroups[0].uniqueId);
-      // result.animationGroups[0].name = signName;
-      // Process all animation groups from this file
-      // for (const targetedAnimation of result.animationGroups[0]
-      //   .targetedAnimations) {
-      //   // this.animationGroup.addTargetedAnimation(
-      //   //   targetedAnimation.animation,
-      //   //   this.characterMesh
-      //   // );
-      // }
-      // console.log("Animationgroup:", this.animationGroup);
-
-      console.log(
-        "Result before returning:",
-        signName,
-        signFile,
-        result.animationGroups[0].name
-      );
 
       return myAnimation;
     } catch (error) {
@@ -109,29 +82,13 @@ class CharacterController {
 
   // Load multiple animations and add them to the queue
   async loadMultipleAnimations(signNames) {
-    // Create a new AnimationGroup to combine all animations
-    // const combinedAnimationGroup = new BABYLON.AnimationGroup(
-    //   "combinedAnimations"
-    // );
-
-    // this.animationGroup = combinedAnimationGroup;
-
-    console.log("Animation group created.");
-
     const animationResult = [];
 
     for (const signName of signNames) {
-      console.log("Loading animation:", signName);
-      console.log("Loading:", signName);
       const result = await this.loadAnimation(signName);
       animationResult.push(result);
-      console.log("result after loadAnimation:", result);
       console.log("Loaded:", signName);
     }
-
-    console.log(
-      "Animation group after loading multiple animations:", animationResult
-    );
 
     return animationResult;
   }
@@ -264,8 +221,6 @@ class CharacterController {
   async playAnimationGroup(animationGroup) {
     return new Promise((resolve, reject) => {
       try {
-        // Play the animation
-        console.log("Current animation group", this.currentAnimationGroup);
         // Stop any currently playing animation
         if (this.currentAnimationGroup) {
           this.currentAnimationGroup.stop();

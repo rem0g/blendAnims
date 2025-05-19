@@ -38,8 +38,6 @@ class CameraController {
 
   // Function to set the camera on a bone of the target mesh, by default the neck bone (index 4)
   setCameraOnBone(targetMesh, skeleton, boneIndex = 4) {
-    console.log("Setting camera on bone...");
-
     // Use MeshBuilder instead of Mesh for better parameter handling
     var sphere = MeshBuilder.CreateSphere(
       "sphere1",
