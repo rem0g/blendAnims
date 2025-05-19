@@ -8,6 +8,7 @@ import UIController from "./UIController.js";
 import { availableSigns } from "./availableSigns.js";
 import { GLTFLoaderAnimationStartMode } from "babylonjs-loaders";
 
+
 // Set the animation start mode to NONE
 // This is a workaround to fix the bug where the animation starts playing automatically
 BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (loader) {
@@ -40,7 +41,7 @@ const animationController = new AnimationController(scene, characterController, 
 // Load an initial animation as an example (optional)
 // await characterController.loadAnimation('HALLO');
 
-await animationController.blendAnimations('LELYSTAD', 'HAARLEM');
+await animationController.blendAnimations('HALLO', 'LELYSTAD');
 
 
 scene.debugLayer.show();

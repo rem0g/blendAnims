@@ -5,7 +5,7 @@ import {
   SceneLoader,
   ImportAnimationsAsync,
 } from "babylonjs";
-import { availableSigns } from "./availableSigns.js";
+import { availableSigns, availableSignsMap} from "./availableSigns.js";
 
 // Class to load and control the character
 class CharacterController {
@@ -78,6 +78,7 @@ class CharacterController {
       console.log("Result:", result, result.animationGroups, this.scene.animationGroups);
 
       const myAnimation = result.animationGroups.find((x,i)=>x.name === "Unreal Take" && i != 0);
+      myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
       console.log("My animation:", myAnimation);
       myAnimation.name = signName;
       // console.log(result.animationGroups[0].uniqueId);

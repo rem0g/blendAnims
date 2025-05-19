@@ -91,31 +91,26 @@ class AnimationController {
     // Add all animations to one animation group
     try {
       // Load both animations
-      const animationGroups = await this.characterController.loadMultipleAnimations([
-        signName1,
-        signName2,
-      ]);
+      const animationGroups =
+        await this.characterController.loadMultipleAnimations([
+          signName1,
+          signName2,
+        ]);
 
       const animationGroup1 = animationGroups[0];
       const animationGroup2 = animationGroups[1];
 
-
-      animationGroup1.enableBlending = true;
-      animationGroup1.blendingSpeed = this.transitionDuration;
-
-      animationGroup2.enableBlending = true;  
-      animationGroup2.blendingSpeed = this.transitionDuration;
-      // animationGroup2.normalize(60, 100);
+      this.scene.animationPropertiesOverride =
+        new BABYLON.AnimationPropertiesOverride();
+      this.scene.animationPropertiesOverride.enableBlending = true;
+      this.scene.animationPropertiesOverride.blendingSpeed = 0.05;
 
       const observer = animationGroup1.onAnimationGroupEndObservable.add(() => {
-        animationGroup1.onAnimationGroupEndObservable.remove(observer)
+        animationGroup1.onAnimationGroupEndObservable.remove(observer);
         this.characterController.playAnimationGroup(animationGroup2);
       });
-      
+
       this.characterController.playAnimationGroup(animationGroup1);
-
-
-
     } catch (error) {
       console.error(`Error loading animations for blending:`, error);
       return;
