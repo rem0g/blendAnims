@@ -28,6 +28,27 @@ cameraController.setPosition(cameraPosition.x, cameraPosition.y + 1, cameraPosit
 
 const isPlaying = false;
 
+const recorder = new BABYLON.VideoRecorder(engine, scene, {
+  fps: 60,
+  mimeType: "video/webm" // or "video/webm;codecs=vp9"
+});
+
+
+// This can be used to record the scene 
+// // Start recording
+// recorder.startRecording();
+
+// // Stop after 5 seconds and download the video
+// setTimeout(() => {
+//   recorder.stopRecording().then((blob) => {
+//     const url = URL.createObjectURL(blob);
+//     const a = document.createElement("a");
+//     a.href = url;
+//     a.download = "animation.webm";
+//     a.click();
+//   });
+// }, 5000);
+
 // Initialize character controller
 const characterController = new CharacterController(scene, cameraController, isPlaying);
 await characterController.init();

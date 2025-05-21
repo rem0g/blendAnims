@@ -31,6 +31,20 @@ class CharacterController {
     );
   }
 
+  lockHips() {
+    console.log("Skeletons:", this.character.skeletons);
+    if (this.character.skeletons[0]) {
+      const hipBone = this.character.skeletons[0].bones.find(
+        (bone) => bone.name === "Hips"
+      );
+      
+      if (hipBone) {
+        hipBone.setPosition(new Vector3(0, 1, 0), BABYLON.Space.WORLD);
+        hipBone.setRotation(new Vector3(0, 0, 0), BABYLON.Space.WORLD);
+      }
+    }
+  }
+
   async loadMesh() {
     const characterMesh = await ImportMeshAsync(
       "glassesGuySignLab.glb",

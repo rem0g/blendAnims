@@ -1,3 +1,4 @@
+
 class AnimationController {
   constructor(scene, characterController, isPlaying, sequenceItems) {
     this.scene = scene;
@@ -28,55 +29,7 @@ class AnimationController {
     }
   }
 
-  // Play the full sequence of signs
-  async playSequence(sequenceItems) {
-    if (this.isPlaying || sequenceItems.length == 0) return;
-
-    // Disable play button during playback
-    const playButton = document.getElementById("play-sequence-button");
-    if (playButton) {
-      playButton.disabled = true;
-      playButton.innerHTML = "Playing...";
-    }
-
-    this.isPlaying = true;
-
-    try {
-      console.log("Sequence items:", sequenceItems[0]);
-      // Play each sign in sequence
-      for (let i = 0; i < sequenceItems.length; i++) {
-        const item = sequenceItems[i];
-
-        // Highlight the current item
-        const sequenceItem = document.getElementById(
-          `sequence-item-${item.id}`
-        );
-        if (sequenceItem) {
-          sequenceItem.classList.add("playing");
-        }
-        console.log(`Playing sign: ${item.sign}`);
-        // Play the sign
-        await this.playSign(item.sign.name);
-
-        // Remove highlight
-        if (sequenceItem) {
-          sequenceItem.classList.remove("playing");
-        }
-      }
-    } catch (error) {
-      console.error("Error playing sequence:", error);
-    } finally {
-      this.isPlaying = false;
-
-      // Re-enable play button
-      if (playButton) {
-        playButton.disabled = false;
-        playButton.innerHTML = "Play Sequence";
-      }
-    }
-  }
-
-  async blendAnimations(signNames) {
+  async playSequence(signNames, blending = false) {
     if (!this.characterController) {
       console.warn("Character controller not available for blending");
       return;
@@ -106,11 +59,6 @@ class AnimationController {
         return;
       }
 
-      this.scene.animationPropertiesOverride =
-        new BABYLON.AnimationPropertiesOverride();
-      this.scene.animationPropertiesOverride.enableBlending = true;
-      this.scene.animationPropertiesOverride.blendingSpeed = 0.05;
-
       let currentIndex = 0;
 
       // Function to play the next animation in sequence
@@ -129,9 +77,25 @@ class AnimationController {
           return;
         }
 
-        // Play the current animation
+        // Get the current animation group
         const currentAnimation = animationGroups[currentIndex];
-        
+
+        if (blending) {
+          // this.scene.animationPropertiesOverride =
+          //   new BABYLON.AnimationPropertiesOverride();
+          // this.scene.animationPropertiesOverride.enableBlending = true;
+          // this.scene.animationPropertiesOverride.blendingSpeed = 0.05;
+
+          currentAnimation.targetedAnimations.forEach((targetedAnim) => {
+            const anim = targetedAnim.animation;
+
+            anim.enableBlending = true;
+            anim.blendingSpeed = 0.05;
+          });
+
+          console.log("Animation", currentAnimation);
+        }
+
         // Highlight the current item
         const sequenceItem = document.getElementById(
           `sequence-item-${currentIndex + 1}`
@@ -161,6 +125,7 @@ class AnimationController {
             });
         }
 
+        // Play the current animation
         this.characterController.playAnimationGroup(currentAnimation);
       };
 

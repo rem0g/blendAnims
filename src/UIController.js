@@ -1,6 +1,12 @@
 // Class to handle UI elements and interactions
 class UIController {
-  constructor(scene, availableSigns, characterController, animationController, isPlaying) {
+  constructor(
+    scene,
+    availableSigns,
+    characterController,
+    animationController,
+    isPlaying
+  ) {
     this.scene = scene;
     this.availableSigns = availableSigns;
     this.characterController = characterController;
@@ -8,7 +14,10 @@ class UIController {
     this.sequenceItems = [];
     this.isPlaying = isPlaying; // Flag to indicate if a sequence is currently playing
     this.nextItemId = 1; // For generating unique IDs for sequence items
-    
+    this.controlsEnabled = false; // Flag to enable/disable controls
+    this.blending = true; // Blending flag
+    this.isRecording = false; // Flag to indicate if recording is active
+
     // Bind methods to maintain proper 'this' context
     this.filterSignLibrary = this.filterSignLibrary.bind(this);
     this.handleDragOver = this.handleDragOver.bind(this);
@@ -23,7 +32,6 @@ class UIController {
     // Create UI
     this.animationController.init(this.sequenceItems);
     this.createDragDropUI();
-
   }
 
   createDragDropUI() {
@@ -32,11 +40,66 @@ class UIController {
     this.container.className = "ui-container";
     document.body.appendChild(this.container);
 
+    // Create the header with title and settings button
+    const headerContainer = document.createElement("div");
+    headerContainer.className = "ui-header";
+    this.container.appendChild(headerContainer);
+
     // Create the title
     this.title = document.createElement("h1");
     this.title.className = "ui-title";
     this.title.textContent = "Sign Language Sequencer";
     this.container.appendChild(this.title);
+
+    // Create the blending settings button
+    const blendingSettingsButton = document.createElement("button");
+    blendingSettingsButton.className = "blending-settings-button";
+    blendingSettingsButton.innerHTML = "⚙️"; // Gear icon
+    blendingSettingsButton.title = "Blending Settings";
+    // blendingSettingsButton.onclick = 
+    headerContainer.appendChild(blendingSettingsButton);
+
+    // Create the blending toggle button
+    const blendingToggleButton = document.createElement("button");
+    blendingToggleButton.className = "blending-toggle-button";
+    blendingToggleButton.innerHTML =  this.blending
+        ? "Disable Blending"
+        : "Enable Blending";
+    blendingToggleButton.title = "Enable/Disable Blending";
+    blendingToggleButton.onclick = () => {
+      this.blending = !this.blending;
+      blendingToggleButton.classList.toggle("active", this.blending);
+      blendingToggleButton.innerHTML = this.blending
+        ? "Disable Blending"
+        : "Enable Blending";
+    }
+    headerContainer.appendChild(blendingToggleButton);
+
+    // Create button to record the sequence
+    const recordButton = document.createElement("button");
+    recordButton.className = "record-button";
+    recordButton.innerHTML = this.isRecording
+        ? "Do not record sequence"
+        : "Record Sequence";
+    recordButton.title = "Record Sequence";
+    recordButton.onclick = () => {
+      this.isRecording = !this.isRecording;
+      recordButton.classList.toggle("active", this.isRecording);
+      recordButton.innerHTML = this.isRecording
+        ? "Do not record sequence"
+        : "Record Sequence";
+    }
+    headerContainer.appendChild(recordButton);
+
+
+    // Create the blending settings panel (hidden by default)
+    this.blendingPanel = document.createElement("div");
+    this.blendingPanel.className = "blending-settings-panel";
+    this.blendingPanel.style.display = "none";
+    this.container.appendChild(this.blendingPanel);
+
+    // Add settings content
+    // this.createBlendingSettingsPanel();
 
     // Create two-column layout
     const mainLayout = document.createElement("div");
@@ -93,10 +156,10 @@ class UIController {
     playSequenceButton.innerHTML = "Play Sequence";
     playSequenceButton.disabled = true;
     playSequenceButton.onclick = () => {
-      // this.animationController.playSequence(this.sequenceItems);
-
       // Blend animation for the sequence
-      this.animationController.blendAnimations(this.sequenceItems.map(item => item.sign.name));
+      this.animationController.playSequence(
+        this.sequenceItems.map((item) => item.sign.name), this.blending
+      );
     };
     sequenceControls.appendChild(playSequenceButton);
 
@@ -132,6 +195,30 @@ class UIController {
     sequenceDropArea.appendChild(sequenceContainer);
     sequenceColumn.appendChild(sequenceDropArea);
   }
+
+  // createRootContainer() {
+  //   // this.rootContainer = new BABYLON.GUI.Grid("grid");
+  //   this.rootContainer = 
+  // }
+
+  // Create blending settings panel
+  createBlendingSettingsPanel() {
+    const panelTitle = document.createElement("h3");
+    panelTitle.textContent = "Animation Blending Settings";
+    this.blendingPanel.appendChild(panelTitle);
+
+    // Blending speed slider using GUI
+    this.slider = new BABYLON.GUI.Slider();
+    this.slider.vericalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BELOW;
+    this.slider.width = "50%";
+
+
+
+    
+
+    
+  }
+
 
   // Filter the sign library based on search input
   filterSignLibrary() {
@@ -190,7 +277,6 @@ class UIController {
         e.stopPropagation(); // Prevent dragging when clicking play
         console.log(`Playing sign: ${sign.name}`);
         this.animationController.playSign(sign.name);
-
       };
       signItem.appendChild(playButton);
 
@@ -198,7 +284,6 @@ class UIController {
       library.appendChild(signItem);
     });
   }
-
 
   // Update the sequence UI
   updateSequenceUI() {
@@ -243,20 +328,23 @@ class UIController {
       sequenceItem.addEventListener("dragend", () => {
         sequenceItem.classList.remove("dragging");
       });
-      
+
       // Add dragover handler for reordering
       sequenceItem.addEventListener("dragover", (e) => {
         e.preventDefault();
         const draggingItem = document.querySelector(".dragging");
         if (!draggingItem) return;
-        
+
         const box = sequenceItem.getBoundingClientRect();
         const mouseY = e.clientY;
-        
+
         if (mouseY < box.top + box.height / 2) {
           sequenceContainer.insertBefore(draggingItem, sequenceItem);
         } else {
-          sequenceContainer.insertBefore(draggingItem, sequenceItem.nextSibling);
+          sequenceContainer.insertBefore(
+            draggingItem,
+            sequenceItem.nextSibling
+          );
         }
       });
 
@@ -310,29 +398,34 @@ class UIController {
         this.updateSequenceOrder();
       }
     });
-    
+
     // Make the empty parts of the container accept drops too
     sequenceContainer.addEventListener("dragover", (e) => {
       e.preventDefault();
       const draggingItem = document.querySelector(".dragging");
       if (!draggingItem) return;
-      
+
       // If not over another item, append to the end
-      const items = Array.from(sequenceContainer.querySelectorAll(".sequence-item:not(.dragging)"));
+      const items = Array.from(
+        sequenceContainer.querySelectorAll(".sequence-item:not(.dragging)")
+      );
       const mouseY = e.clientY;
-      
+
       // Find the closest item below the cursor
-      const closestItem = items.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = mouseY - box.top - box.height / 2;
-        
-        if (offset < 0 && offset > closest.offset) {
-          return { offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-      
+      const closestItem = items.reduce(
+        (closest, child) => {
+          const box = child.getBoundingClientRect();
+          const offset = mouseY - box.top - box.height / 2;
+
+          if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+          } else {
+            return closest;
+          }
+        },
+        { offset: Number.NEGATIVE_INFINITY }
+      ).element;
+
       if (closestItem) {
         sequenceContainer.insertBefore(draggingItem, closestItem);
       } else {
@@ -351,14 +444,14 @@ class UIController {
         newOrder.push(sequenceItem);
       }
     });
-    
+
     this.sequenceItems = newOrder;
   }
 
   // Setup the logic for reordering sequence items via drag and drop
   setupSequenceReordering() {
     const sequenceContainer = document.getElementById("sequence-container");
-    
+
     // Add drop handler to update the internal array order
     sequenceContainer.addEventListener("drop", (e) => {
       e.preventDefault();
@@ -368,7 +461,9 @@ class UIController {
 
   // Remove an item from the sequence
   removeFromSequence(itemId) {
-    this.sequenceItems = this.sequenceItems.filter((item) => item.id !== itemId);
+    this.sequenceItems = this.sequenceItems.filter(
+      (item) => item.id !== itemId
+    );
     this.updateSequenceUI();
   }
 
@@ -393,8 +488,8 @@ class UIController {
     // Otherwise, this is adding a new sign from the library
     const signName = e.dataTransfer.getData("text/plain");
     if (!signName) return;
-    
-    const sign = this.availableSigns.find(s => s.name === signName);
+
+    const sign = this.availableSigns.find((s) => s.name === signName);
     if (!sign) return;
 
     // Add to sequence
@@ -405,13 +500,13 @@ class UIController {
   addToSequence(sign) {
     // Generate a unique ID for this sequence item
     const itemId = this.nextItemId++;
-    
+
     // Add to our sequence data
     this.sequenceItems.push({
       id: itemId,
-      sign: sign
+      sign: sign,
     });
-    
+
     // Update the UI
     this.updateSequenceUI();
   }

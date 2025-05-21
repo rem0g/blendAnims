@@ -5,7 +5,7 @@ export const availableSigns = [
     { name: "HAARLEM", file: "signs/HAARLEM_250226_1.glb", start: 15, end: 90 },
     { name: "KIJKEN-NAAR-ELKAAR", file: "signs/KIJKEN-NAAR-ELKAAR_250228_1.glb", start: 30, end: 90 },
     { name: "KRIJGEN-A", file: "signs/KRIJGEN-A_250228_5.glb", start: 60, end: 110 },
-    { name: "LELYSTAD", file: "signs/LELYSTAD_250314_1.glb", start: 26, end: 120 },
+    { name: "LELYSTAD", file: "signs/LELYSTAD_250314_1.glb", start:55, end: 130 },
     { name: "LES", file: "signs/LES_250228_2.glb", start: 85, end: 150 },
     { name: "PROBEREN-E", file: "signs/PROBEREN-E_250226_2.glb", start: 50, end: 117 },
     { name: "SCHULDGEVEN", file: "signs/SCHULDGEVEN_250226_1.glb", start: 50, end: 90 },
