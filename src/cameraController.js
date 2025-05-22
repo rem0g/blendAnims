@@ -38,7 +38,7 @@ class CameraController {
 
   // Function to set the camera on a bone of the target mesh, by default the neck bone (index 4)
   setCameraOnBone(targetMesh, skeleton, boneIndex = 4) {
-    // Use MeshBuilder instead of Mesh for better parameter handling
+    // Create sphere to attatch to the neck bone
     var sphere = MeshBuilder.CreateSphere(
       "sphere1",
       {
@@ -53,6 +53,7 @@ class CameraController {
     const bone = skeleton.bones[boneIndex];
 
     // Get the bone's absolute position
+    // This is hardcoded for now, it is somehow not possible to find the right coordinates of the neck bone in world space
     const bonePosition = new Vector3(0, 1.6, 0);
     sphere.position = bonePosition;
     // sphere.attachToBone(bone, targetMesh);

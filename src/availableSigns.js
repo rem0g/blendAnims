@@ -1,4 +1,5 @@
-// Available sign animations
+// Available sign animations, this is hardcoded for now
+// TODO: will have to inspect folder, and do this automatically
 export const availableSigns = [
     { name: "HALLO", file: "signs/HALLO-C_250226_1.glb", start:60, end: 100 },
     { name: "SCHOOL", file: "signs/SCHOOL-D_250226_1.glb", start: 40, end: 110 },
@@ -14,9 +15,9 @@ export const availableSigns = [
   ];
 
 
-
-  export const availableSignsMap = availableSigns.reduce((acc, sign) => {
-    acc[sign.name] = sign;
-    return acc;
-  }
-  , {});  
+// Mapping to get the item from the name
+export const availableSignsMap = availableSigns.reduce((acc, sign) => {
+  acc[sign.name] = sign;
+  return acc;
+}
+, {});  

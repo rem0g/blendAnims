@@ -3,10 +3,12 @@ class EyeBlinkController {
 
 //   Controller or just regular fucntions?
 
-  createEyeBlinkAnimation(scene, characterController) {
+    createEyeBlinkAnimation(scene, characterController) {
     // Get the morph targets for the eyes
-    const morph1 = characterController.characterMesh.morphTargetManager.getTarget(57);
-    const morph2 = characterController.characterMesh.morphTargetManager.getTarget(58);
+    var morph1 = morphTargetManager.getTargetByName("eyeBlinkLeft");
+    var morph2 = morphTargetManager.getTargetByName("eyeBlinkRight");
+    morph1 = morph1 != null ? morph1 : morphTargetManager.getTarget(57);
+    morph2 = morph2 != null ? morph2 : morphTargetManager.getTarget(58);
 
     if (!morph1 || !morph2) {
       console.warn("Morph targets for eyes not found");

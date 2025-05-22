@@ -85,6 +85,7 @@ class CharacterController {
         BABYLON.SceneLoaderAnimationGroupLoadingMode.NoSync
       );
 
+      // Find the animationgroup that was just loaded
       var myAnimation = result.animationGroups.find(
         (x, i) => x.name === "Unreal Take" && i != 0
       );
@@ -99,6 +100,7 @@ class CharacterController {
         availableSignsMap[signName].end
       );
 
+      // Rename the animationgroup to the signName
       myAnimation.name = signName;
 
       return myAnimation;
@@ -140,7 +142,7 @@ class CharacterController {
     return animationResult;
   }
 
-  // Play a single animation
+  // Play a single animation (depricated)
   async playAnimation() {
     return new Promise((resolve, reject) => {
       try {
@@ -197,6 +199,7 @@ class CharacterController {
     });
   }
 
+  // Play the animationgroup
   async playAnimationGroup(animationGroup) {
     return new Promise((resolve, reject) => {
       try {

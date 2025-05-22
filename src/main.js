@@ -44,7 +44,7 @@ console.log("Recorder", recorder);
 const uiController = new UIController(scene, availableSigns, characterController, animationController, isPlaying);
 uiController.init();
 
-// Load an initial animation as an example (optional)
+// Load an initial animation as an example
 // await characterController.loadAnimation('HALLO');
 
 scene.debugLayer.show();

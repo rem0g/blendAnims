@@ -1,3 +1,4 @@
+// Class to contol the animations of the avatar
 class AnimationController {
   constructor(scene, characterController, isPlaying, sequenceItems, recorder) {
     this.scene = scene;
@@ -88,6 +89,7 @@ class AnimationController {
           // this.scene.animationPropertiesOverride.enableBlending = true;
           // this.scene.animationPropertiesOverride.blendingSpeed = 0.05;
 
+          // Enable blending for all targeted animations
           currentAnimation.targetedAnimations.forEach((targetedAnim) => {
             const anim = targetedAnim.animation;
 
@@ -124,7 +126,7 @@ class AnimationController {
               if (sequenceItem) {
                 sequenceItem.classList.remove("playing");
 
-                // Stop recording 
+                // Stop recording when recording
                 if (isRecording) {
                   this.recorder.stopRecording().then((blob) => {
                     const url = URL.createObjectURL(blob);
@@ -155,7 +157,7 @@ class AnimationController {
     } finally {
       this.isPlaying = false;
 
-      // Re-enable play button
+      // Re-enable play button after the animation
       if (playButton) {
         playButton.disabled = false;
         playButton.innerHTML = "Play Sequence";

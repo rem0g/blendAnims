@@ -1,6 +1,6 @@
 import { Grid } from "@babylonjs/gui";
 
-// Class to handle UI elements and interactions
+// Class to handle UI elements and interactions, such as drag and drop
 class UIController {
   constructor(
     scene,
@@ -158,7 +158,7 @@ class UIController {
     playSequenceButton.innerHTML = "Play Sequence";
     playSequenceButton.disabled = true;
     playSequenceButton.onclick = () => {
-      this.isRecording
+      this.isRecording = false;
       // Blend animation for the sequence
       this.animationController.playSequence(
         this.sequenceItems.map((item) => item.sign.name),
@@ -249,6 +249,7 @@ class UIController {
     });
   }
 
+  // Funtion to add the signs to the library
   populateSignLibrary() {
     const library = document.getElementById("sign-library");
 
@@ -315,6 +316,12 @@ class UIController {
         playButton.disabled = true;
       }
 
+      // Disable Record button when sequence is empty
+      const recordButton = document.getElementById("record-sequence-button")
+      if (recordButton) {
+        recordButton.disabled = true;
+      }
+
       return;
     }
 
@@ -322,6 +329,12 @@ class UIController {
     const playButton = document.getElementById("play-sequence-button");
     if (playButton && !this.isPlaying) {
       playButton.disabled = false;
+    }
+
+    // Enable record button when sequence has items
+    const recordButton = document.getElementById("record-sequence-button");
+    if (recordButton && !this.isPlaying) {
+      recordButton.disables = false;
     }
 
     // Create sequence items
