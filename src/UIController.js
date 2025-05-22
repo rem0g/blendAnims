@@ -400,7 +400,7 @@ class UIController {
       playButton.className = "play-button small-button";
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
-      playButton.onclick = () => this.animationController.playSign(item.sign);
+      playButton.onclick = () => this.animationController.playSign(item.sign.name);
       controls.appendChild(playButton);
 
       // Remove button

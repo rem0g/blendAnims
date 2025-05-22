@@ -74,6 +74,15 @@ class CharacterController {
         return null;
       }
 
+      // Check if the sign file is not already loaded, to prevent duplicates
+      const loadedAnimationGroups = this.scene.animationGroups.filter(
+        (group) => group.name === signName
+      );
+      if (loadedAnimationGroups.length > 0) {
+        console.log(`Animation group already loaded: ${signName}`);
+        return loadedAnimationGroups[0];
+      }
+
       const signFile = sign.file;
       console.log("Loading animation:", signFile);
 
@@ -93,12 +102,10 @@ class CharacterController {
       // Non-destructive trim of the animation
       // myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
 
+      const startFrame = availableSignsMap[signName].start;
+      const endFrame = availableSignsMap[signName].end;
       // Hard trim of the animation
-      myAnimation = this.hardTrim(
-        myAnimation,
-        availableSignsMap[signName].start,
-        availableSignsMap[signName].end
-      );
+      myAnimation = this.hardTrim(myAnimation, startFrame, endFrame);
 
       // Rename the animationgroup to the signName
       myAnimation.name = signName;
