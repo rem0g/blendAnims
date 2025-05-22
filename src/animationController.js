@@ -1,10 +1,12 @@
-
 class AnimationController {
-  constructor(scene, characterController, isPlaying, sequenceItems) {
+  constructor(scene, characterController, isPlaying, sequenceItems, recorder) {
     this.scene = scene;
     this.characterController = characterController;
     this.isPlaying = isPlaying;
     this.transitionDuration = 0.5; // Duration for blending animations hardcoded for now
+    this.recorder = recorder;
+
+    console.log("this.recorder", this.recorder);
   }
 
   // Initialize the AnimationController
@@ -29,7 +31,7 @@ class AnimationController {
     }
   }
 
-  async playSequence(signNames, blending = false) {
+  async playSequence(signNames, blending = false, isRecording) {
     if (!this.characterController) {
       console.warn("Character controller not available for blending");
       return;
@@ -121,10 +123,26 @@ class AnimationController {
             currentAnimation.onAnimationGroupEndObservable.add(() => {
               if (sequenceItem) {
                 sequenceItem.classList.remove("playing");
+
+                // Stop recording 
+                if (isRecording) {
+                  this.recorder.stopRecording().then((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "animation.webm";
+                    a.click();
+                  });
+                }
               }
             });
         }
 
+        if (isRecording) {
+          console.log("Recorder", this.recorder);
+          // Start recording the scene
+          this.recorder.startRecording();
+        }
         // Play the current animation
         this.characterController.playAnimationGroup(currentAnimation);
       };

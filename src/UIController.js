@@ -1,3 +1,5 @@
+import { Grid } from "@babylonjs/gui";
+
 // Class to handle UI elements and interactions
 class UIController {
   constructor(
@@ -56,15 +58,15 @@ class UIController {
     blendingSettingsButton.className = "blending-settings-button";
     blendingSettingsButton.innerHTML = "⚙️"; // Gear icon
     blendingSettingsButton.title = "Blending Settings";
-    // blendingSettingsButton.onclick = 
+    // blendingSettingsButton.onclick =
     headerContainer.appendChild(blendingSettingsButton);
 
     // Create the blending toggle button
     const blendingToggleButton = document.createElement("button");
     blendingToggleButton.className = "blending-toggle-button";
-    blendingToggleButton.innerHTML =  this.blending
-        ? "Disable Blending"
-        : "Enable Blending";
+    blendingToggleButton.innerHTML = this.blending
+      ? "Disable Blending"
+      : "Enable Blending";
     blendingToggleButton.title = "Enable/Disable Blending";
     blendingToggleButton.onclick = () => {
       this.blending = !this.blending;
@@ -72,15 +74,15 @@ class UIController {
       blendingToggleButton.innerHTML = this.blending
         ? "Disable Blending"
         : "Enable Blending";
-    }
+    };
     headerContainer.appendChild(blendingToggleButton);
 
     // Create button to record the sequence
     const recordButton = document.createElement("button");
     recordButton.className = "record-button";
     recordButton.innerHTML = this.isRecording
-        ? "Do not record sequence"
-        : "Record Sequence";
+      ? "Do not record sequence"
+      : "Record Sequence";
     recordButton.title = "Record Sequence";
     recordButton.onclick = () => {
       this.isRecording = !this.isRecording;
@@ -88,9 +90,8 @@ class UIController {
       recordButton.innerHTML = this.isRecording
         ? "Do not record sequence"
         : "Record Sequence";
-    }
+    };
     headerContainer.appendChild(recordButton);
-
 
     // Create the blending settings panel (hidden by default)
     this.blendingPanel = document.createElement("div");
@@ -100,6 +101,7 @@ class UIController {
 
     // Add settings content
     // this.createBlendingSettingsPanel();
+    this.createRootContainer();
 
     // Create two-column layout
     const mainLayout = document.createElement("div");
@@ -156,9 +158,12 @@ class UIController {
     playSequenceButton.innerHTML = "Play Sequence";
     playSequenceButton.disabled = true;
     playSequenceButton.onclick = () => {
+      this.isRecording
       // Blend animation for the sequence
       this.animationController.playSequence(
-        this.sequenceItems.map((item) => item.sign.name), this.blending
+        this.sequenceItems.map((item) => item.sign.name),
+        this.blending, 
+        this.isRecording
       );
     };
     sequenceControls.appendChild(playSequenceButton);
@@ -171,6 +176,21 @@ class UIController {
       this.updateSequenceUI();
     };
     sequenceControls.appendChild(clearSequenceButton);
+
+    const recordSequenceButton = document.createElement("button");
+    recordSequenceButton.className = "control-button record-sequence-button";
+    recordSequenceButton.innerHTML = "Record Sequence";
+    // recordSequenceButton.disabled = true;
+    recordSequenceButton.onclick = () => {
+      this.isRecording = true;
+      recordSequenceButton.classList.toggle("active", this.isRecording);
+      this.animationController.playSequence(
+        this.sequenceItems.map((item) => item.sign.name),
+        this.blending, 
+        this.isRecording
+      );
+    };
+    sequenceControls.appendChild(recordSequenceButton);
 
     sequenceColumn.appendChild(sequenceControls);
 
@@ -196,10 +216,10 @@ class UIController {
     sequenceColumn.appendChild(sequenceDropArea);
   }
 
-  // createRootContainer() {
-  //   // this.rootContainer = new BABYLON.GUI.Grid("grid");
-  //   this.rootContainer = 
-  // }
+  createRootContainer() {
+    this.rootContainer = new Grid("grid");
+    // this.rootContainer =
+  }
 
   // Create blending settings panel
   createBlendingSettingsPanel() {
@@ -211,14 +231,7 @@ class UIController {
     this.slider = new BABYLON.GUI.Slider();
     this.slider.vericalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BELOW;
     this.slider.width = "50%";
-
-
-
-    
-
-    
   }
-
 
   // Filter the sign library based on search input
   filterSignLibrary() {

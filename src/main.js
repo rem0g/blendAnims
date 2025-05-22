@@ -33,27 +33,12 @@ const recorder = new BABYLON.VideoRecorder(engine, scene, {
   mimeType: "video/webm" // or "video/webm;codecs=vp9"
 });
 
-
-// This can be used to record the scene 
-// // Start recording
-// recorder.startRecording();
-
-// // Stop after 5 seconds and download the video
-// setTimeout(() => {
-//   recorder.stopRecording().then((blob) => {
-//     const url = URL.createObjectURL(blob);
-//     const a = document.createElement("a");
-//     a.href = url;
-//     a.download = "animation.webm";
-//     a.click();
-//   });
-// }, 5000);
-
 // Initialize character controller
 const characterController = new CharacterController(scene, cameraController, isPlaying);
 await characterController.init();
 
-const animationController = new AnimationController(scene, characterController, isPlaying);
+const animationController = new AnimationController(scene, characterController, isPlaying, recorder);
+console.log("Recorder", recorder);
 
 // Initialize the UI controller and pass the character controller to it
 const uiController = new UIController(scene, availableSigns, characterController, animationController, isPlaying);
@@ -61,9 +46,6 @@ uiController.init();
 
 // Load an initial animation as an example (optional)
 // await characterController.loadAnimation('HALLO');
-
-// await animationController.blendAnimations(['HALLO', 'LELYSTAD', 'SCHOOL']);
-
 
 scene.debugLayer.show();
 

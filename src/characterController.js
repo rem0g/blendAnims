@@ -5,7 +5,7 @@ import {
   SceneLoader,
   ImportAnimationsAsync,
 } from "babylonjs";
-import { availableSigns, availableSignsMap} from "./availableSigns.js";
+import { availableSigns, availableSignsMap } from "./availableSigns.js";
 
 // Class to load and control the character
 class CharacterController {
@@ -37,11 +37,13 @@ class CharacterController {
       const hipBone = this.character.skeletons[0].bones.find(
         (bone) => bone.name === "Hips"
       );
-      
+
       if (hipBone) {
         hipBone.setPosition(new Vector3(0, 1, 0), BABYLON.Space.WORLD);
         hipBone.setRotation(new Vector3(0, 0, 0), BABYLON.Space.WORLD);
       }
+
+      // translatie van de hips verwijderen bij inladen
     }
   }
 
@@ -80,11 +82,23 @@ class CharacterController {
         signFile,
         this.scene,
         false,
-        BABYLON.SceneLoaderAnimationGroupLoadingMode.NoSync,
+        BABYLON.SceneLoaderAnimationGroupLoadingMode.NoSync
       );
 
-      const myAnimation = result.animationGroups.find((x,i)=>x.name === "Unreal Take" && i != 0);
-      myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
+      var myAnimation = result.animationGroups.find(
+        (x, i) => x.name === "Unreal Take" && i != 0
+      );
+
+      // Non-destructive trim of the animation
+      // myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
+
+      // Hard trim of the animation
+      myAnimation = this.hardTrim(
+        myAnimation,
+        availableSignsMap[signName].start,
+        availableSignsMap[signName].end
+      );
+
       myAnimation.name = signName;
 
       return myAnimation;
@@ -92,6 +106,25 @@ class CharacterController {
       console.error("Error in loadAnimation:", error.message);
       return null;
     }
+  }
+
+  // Delete the keyframes outside the start and end frames from the animationgroup
+  hardTrim(animationGroup, start, end) {
+    animationGroup.targetedAnimations.forEach((e) => {
+      var keys = e.animation.getKeys();
+      const startIndex = keys.findIndex((e) => e.frame >= start);
+      const endIndex = keys.findIndex((e) => e.frame >= end);
+      keys = e.animation.getKeys().slice(startIndex, endIndex);
+      keys = keys.map((key) => ({
+        ...key,
+        frame: key.frame - start,
+      }));
+
+      e.animation.setKeys(keys);
+    });
+    animationGroup.normalize(0, end - start);
+
+    return animationGroup;
   }
 
   // Load multiple animations and add them to the queue
