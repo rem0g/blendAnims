@@ -1,9 +1,9 @@
 class EyeBlinkController {
   constructor() {}
 
-//   Controller or just regular fucntions?
+  //   Controller or just regular fucntions?
 
-    createEyeBlinkAnimation(scene, characterController) {
+  createEyeBlinkAnimation(scene, characterController) {
     // Get the morph targets for the eyes
     var morph1 = morphTargetManager.getTargetByName("eyeBlinkLeft");
     var morph2 = morphTargetManager.getTargetByName("eyeBlinkRight");
@@ -18,8 +18,18 @@ class EyeBlinkController {
     this.eyeBlinkAnimation(morph1, morph2);
 
     // Start the animation
-    scene.beginAnimation(morph1, 0, morph1.animations[0].getKeys().at(-1).frame, true);
-    scene.beginAnimation(morph2, 0, morph2.animations[0].getKeys().at(-1).frame, true);
+    scene.beginAnimation(
+      morph1,
+      0,
+      morph1.animations[0].getKeys().at(-1).frame,
+      true
+    );
+    scene.beginAnimation(
+      morph2,
+      0,
+      morph2.animations[0].getKeys().at(-1).frame,
+      true
+    );
   }
 
   eyeBlinkAnimation(morph1, morph2) {
@@ -63,22 +73,24 @@ class EyeBlinkController {
     morph2.animations = [blinkAnimation];
   }
 
-    // Function to stop the eye blink animation
-    stopEyeBlinkAnimation(scene, characterController) {
-        // Get the morph targets for the eyes
-        const morph1 = characterController.characterMesh.morphTargetManager.getTarget(57);
-        const morph2 = characterController.characterMesh.morphTargetManager.getTarget(58);
+  // Function to stop the eye blink animation
+  stopEyeBlinkAnimation(scene, characterController) {
+    // Get the morph targets for the eyes
+    const morph1 =
+      characterController.characterMesh.morphTargetManager.getTarget(57);
+    const morph2 =
+      characterController.characterMesh.morphTargetManager.getTarget(58);
 
-        if (!morph1 || !morph2) {
-            console.warn("Morph targets for eyes not found");
-            return;
-        }
-
-        // Stop the animation
-        scene.stopAnimation(morph1);
-        scene.stopAnimation(morph2);
-
-        morph1.animations = [];
-        morph2.animations = [];
+    if (!morph1 || !morph2) {
+      console.warn("Morph targets for eyes not found");
+      return;
     }
+
+    // Stop the animation
+    scene.stopAnimation(morph1);
+    scene.stopAnimation(morph2);
+
+    morph1.animations = [];
+    morph2.animations = [];
+  }
 }

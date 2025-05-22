@@ -42,6 +42,32 @@ class UIController {
     this.container.className = "ui-container";
     document.body.appendChild(this.container);
 
+    // Create bars to make the UI appear again
+    const showButton = document.createElement("button");
+    showButton.className = "show-button";
+    showButton.innerHTML = "☰ Show UI";
+    showButton.title = "Show UI";
+
+    // Hide button when UI is open
+    showButton.style.display = "none";    
+    showButton.onclick = () => {
+      this.container.style.display = "block"; // Show the UI
+      showButton.style.display = "none"; // Hide the show button
+    };
+    document.body.appendChild(showButton);
+
+    // Create cross to close the UI
+    const closeButton = document.createElement("button");
+    closeButton.className = "close-button";
+    closeButton.innerHTML = "✖"; // Cross icon
+    closeButton.title = "Close UI";
+    closeButton.onclick = () => {
+      this.container.style.display = "none"; // Hide the UI
+      showButton.style.display = "block"; // Show the show button
+    };
+    this.container.appendChild(closeButton);
+
+
     // Create the header with title and settings button
     const headerContainer = document.createElement("div");
     headerContainer.className = "ui-header";
@@ -85,7 +111,7 @@ class UIController {
       : "Record Sequence";
     recordButton.title = "Record Sequence";
     recordButton.onclick = () => {
-      this.isRecording = !this.isRecording;
+      this.isRecording = true;
       recordButton.classList.toggle("active", this.isRecording);
       recordButton.innerHTML = this.isRecording
         ? "Do not record sequence"
@@ -162,7 +188,7 @@ class UIController {
       // Blend animation for the sequence
       this.animationController.playSequence(
         this.sequenceItems.map((item) => item.sign.name),
-        this.blending, 
+        this.blending,
         this.isRecording
       );
     };
@@ -178,15 +204,16 @@ class UIController {
     sequenceControls.appendChild(clearSequenceButton);
 
     const recordSequenceButton = document.createElement("button");
+    recordSequenceButton.id = "record-sequence-button";
     recordSequenceButton.className = "control-button record-sequence-button";
     recordSequenceButton.innerHTML = "Record Sequence";
-    // recordSequenceButton.disabled = true;
+    recordSequenceButton.disabled = true;
     recordSequenceButton.onclick = () => {
       this.isRecording = true;
       recordSequenceButton.classList.toggle("active", this.isRecording);
       this.animationController.playSequence(
         this.sequenceItems.map((item) => item.sign.name),
-        this.blending, 
+        this.blending,
         this.isRecording
       );
     };
@@ -317,7 +344,7 @@ class UIController {
       }
 
       // Disable Record button when sequence is empty
-      const recordButton = document.getElementById("record-sequence-button")
+      const recordButton = document.getElementById("record-sequence-button");
       if (recordButton) {
         recordButton.disabled = true;
       }
@@ -334,7 +361,7 @@ class UIController {
     // Enable record button when sequence has items
     const recordButton = document.getElementById("record-sequence-button");
     if (recordButton && !this.isPlaying) {
-      recordButton.disables = false;
+      recordButton.disabled = false;
     }
 
     // Create sequence items
@@ -400,7 +427,8 @@ class UIController {
       playButton.className = "play-button small-button";
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
-      playButton.onclick = () => this.animationController.playSign(item.sign.name);
+      playButton.onclick = () =>
+        this.animationController.playSign(item.sign.name);
       controls.appendChild(playButton);
 
       // Remove button

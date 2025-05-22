@@ -26,6 +26,13 @@ body {
   padding: 10px;
 }
 
+.show-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-Index: 1000;
+}
+
 /* === Typography === */
 .ui-title {
   font-size: 24px;

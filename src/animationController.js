@@ -1,6 +1,6 @@
 // Class to contol the animations of the avatar
 class AnimationController {
-  constructor(scene, characterController, isPlaying, sequenceItems, recorder) {
+  constructor(scene, characterController, isPlaying, recorder) {
     this.scene = scene;
     this.characterController = characterController;
     this.isPlaying = isPlaying;
@@ -125,26 +125,25 @@ class AnimationController {
             currentAnimation.onAnimationGroupEndObservable.add(() => {
               if (sequenceItem) {
                 sequenceItem.classList.remove("playing");
-
                 // Stop recording when recording
-                if (isRecording) {
-                  this.recorder.stopRecording().then((blob) => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = "animation.webm";
-                    a.click();
-                  });
-                }
+                // if (isRecording) {
+                //   this.recorder.stopRecording().then((blob) => {
+                //     const url = URL.createObjectURL(blob);
+                //     const a = document.createElement("a");
+                //     a.href = url;
+                //     a.download = "animation.webm";
+                //     a.click();
+                //   });
+                // }
               }
             });
         }
 
-        if (isRecording) {
-          console.log("Recorder", this.recorder);
-          // Start recording the scene
-          this.recorder.startRecording();
-        }
+        // if (!isRecording) {
+        //   console.log("Recorder", this.recorder);
+        //   // Start recording the scene
+        //   this.recorder.startRecording();
+        // }
         // Play the current animation
         this.characterController.playAnimationGroup(currentAnimation);
       };
