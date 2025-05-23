@@ -15,6 +15,21 @@ class AnimationController {
     this.sequenceItems = sequenceItems;
   }
 
+  // Clean up any existing observers and reset state
+  cleanup() {
+    if (this._currentAnimObserver) {
+      // Try to remove the observer if it exists
+      try {
+        // We can't easily track which animation group the observer belongs to,
+        // so we'll just set it to null and let the new sequence handle cleanup
+        this._currentAnimObserver = null;
+      } catch (error) {
+        console.warn("Error cleaning up animation observer:", error);
+      }
+    }
+    this.isPlaying = false;
+  }
+
   // Play a single sign animation
   async playSign(signName) {
     console.log(`Playing sign: ${signName}`);
@@ -43,6 +58,9 @@ class AnimationController {
       return;
     }
 
+    // Clean up any previous state
+    this.cleanup();
+
     // Disable play button during playback
     const playButton = document.getElementById("play-sequence-button");
     if (playButton) {
@@ -59,29 +77,56 @@ class AnimationController {
 
       if (!animationGroups || animationGroups.length == 0) {
         console.warn("No animation groups loaded for blending");
+        this.isPlaying = false;
+        
+        // Re-enable play button
+        if (playButton) {
+          playButton.disabled = false;
+          playButton.innerHTML = "Play Sequence";
+        }
         return;
       }
 
       let currentIndex = 0;
 
+      // Function to handle sequence completion
+      const onSequenceComplete = () => {
+        console.log("Finished playing all animations in sequence");
+        this.isPlaying = false;
+        
+        // Re-enable play button
+        if (playButton) {
+          playButton.disabled = false;
+          playButton.innerHTML = "Play Sequence";
+        }
+      };
+
       // Function to play the next animation in sequence
       const playNextAnimation = () => {
         // Remove any existing observer
-        if (this._currentAnimObserver) {
-          animationGroups[
-            currentIndex - 1
-          ].onAnimationGroupEndObservable.remove(this._currentAnimObserver);
+        if (this._currentAnimObserver && currentIndex > 0) {
+          const previousAnimation = animationGroups[currentIndex - 1];
+          if (previousAnimation && previousAnimation.onAnimationGroupEndObservable) {
+            previousAnimation.onAnimationGroupEndObservable.remove(this._currentAnimObserver);
+          }
           this._currentAnimObserver = null;
         }
 
         // If we've played all animations, we're done
         if (currentIndex >= animationGroups.length) {
-          console.log("Finished playing all animations in sequence");
+          onSequenceComplete();
           return;
         }
 
         // Get the current animation group
         const currentAnimation = animationGroups[currentIndex];
+
+        // Validate that the animation group exists and has the required observable
+        if (!currentAnimation || !currentAnimation.onAnimationGroupEndObservable) {
+          console.error(`Invalid animation group at index ${currentIndex}`);
+          onSequenceComplete();
+          return;
+        }
 
         if (blending) {
           // this.scene.animationPropertiesOverride =
@@ -112,11 +157,11 @@ class AnimationController {
         if (currentIndex < animationGroups.length - 1) {
           this._currentAnimObserver =
             currentAnimation.onAnimationGroupEndObservable.add(() => {
-              currentIndex++;
               // Remove highlight
               if (sequenceItem) {
                 sequenceItem.classList.remove("playing");
               }
+              currentIndex++;
               playNextAnimation();
             });
         } else {
@@ -136,6 +181,7 @@ class AnimationController {
                 //   });
                 // }
               }
+              onSequenceComplete();
             });
         }
 
@@ -152,11 +198,9 @@ class AnimationController {
       playNextAnimation();
     } catch (error) {
       console.error(`Error loading animations for blending:`, error);
-      return;
-    } finally {
       this.isPlaying = false;
-
-      // Re-enable play button after the animation
+      
+      // Re-enable play button on error
       if (playButton) {
         playButton.disabled = false;
         playButton.innerHTML = "Play Sequence";

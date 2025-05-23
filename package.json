@@ -6,14 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "update-signs": "node update-signs.js",
+    "api-server": "node api-server.js",
+    "dev-full": "concurrently \"npm run dev\" \"npm run api-server\""
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "vite": "^6.3.1"
   },
   "dependencies": {
     "@babylonjs/gui": "^8.8.5",
     "babylonjs": "^8.3.1",
-    "babylonjs-loaders": "^8.3.1"
+    "babylonjs-loaders": "^8.3.1",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
   }
 }

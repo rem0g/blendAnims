@@ -1,0 +1,440 @@
+[
+  {
+    "name": "1",
+    "file": "signs/1_250507_12.glb",
+    "start": 60,
+    "end": 130
+  },
+  {
+    "name": "12",
+    "file": "signs/12_250507_37.glb",
+    "start": 60,
+    "end": 130
+  },
+  {
+    "name": "18",
+    "file": "signs/18_250507_42.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "2",
+    "file": "signs/2_250507_13.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "3",
+    "file": "signs/3_250507_14.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "5",
+    "file": "signs/5_250507_15.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "70",
+    "file": "signs/70_250507_43.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "alcohol",
+    "file": "signs/alcohol_250507_46.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "alleen",
+    "file": "signs/alleen_250507_90.glb",
+    "start": 60,
+    "end": 90
+  },
+  {
+    "name": "arts",
+    "file": "signs/arts_250507_32.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "auto",
+    "file": "signs/auto_250507_52.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "auto_rijden",
+    "file": "signs/auto_rijden_250507_51.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "beinvloeden",
+    "file": "signs/beinvloeden_250507_48.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "bewaar",
+    "file": "signs/bewaar_250507_17.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "buiten_bereik",
+    "file": "signs/buiten_bereik_250507_22.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "bus",
+    "file": "signs/bus_250507_55.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "dosis",
+    "file": "signs/dosis_250507_16.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "drink",
+    "file": "signs/drink_250507_51.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "droog",
+    "file": "signs/droog_250507_19.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "fiets",
+    "file": "signs/fiets_250507_53.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "fietsen",
+    "file": "signs/fietsen_250507_53.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "ga",
+    "file": "signs/ga_250507_61.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "gebruik",
+    "file": "signs/gebruik_250507_27.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "HAARLEM",
+    "file": "signs/HAARLEM_250226_1.glb",
+    "start": 15,
+    "end": 90
+  },
+  {
+    "name": "HALLO",
+    "file": "signs/HALLO-C_250226_1.glb",
+    "start": 60,
+    "end": 130
+  },
+  {
+    "name": "keer",
+    "file": "signs/keer_250507_10.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "KIJKEN-NAAR-ELKAAR",
+    "file": "signs/KIJKEN-NAAR-ELKAAR_250228_1.glb",
+    "start": 90,
+    "end": 90
+  },
+  {
+    "name": "kinderen",
+    "file": "signs/kinderen_250507_34.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "koel",
+    "file": "signs/koel_250507_18.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "KRIJGEN-A",
+    "file": "signs/KRIJGEN-A_250228_5.glb",
+    "start": 60,
+    "end": 110
+  },
+  {
+    "name": "laatste_dosis",
+    "file": "signs/laatste_dosis_250507_49.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "lege_maag",
+    "file": "signs/lege_maag_250507_25.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "LELYSTAD",
+    "file": "signs/LELYSTAD_250314_1.glb",
+    "start": 55,
+    "end": 190
+  },
+  {
+    "name": "LES",
+    "file": "signs/LES_250228_2.glb",
+    "start": 85,
+    "end": 150
+  },
+  {
+    "name": "loop",
+    "file": "signs/loop_250507_62.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "lopen",
+    "file": "signs/lopen_250507_54.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "maaltijd",
+    "file": "signs/maaltijd_250507_26.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "mag",
+    "file": "signs/mag_250507_2.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "medicijn",
+    "file": "signs/medicijn_250507_7.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "met",
+    "file": "signs/met_250507_63.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "motor_rijden",
+    "file": "signs/motor_rijden_250507_52.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "naar",
+    "file": "signs/naar_250507_64.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "neem_in",
+    "file": "signs/neem_in_250507_23.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "niet",
+    "file": "signs/niet_250507_4.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "ouder",
+    "file": "signs/ouder_250507_39.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "ouder2",
+    "file": "signs/ouder2_250507_41.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "overleg",
+    "file": "signs/overleg_250507_31.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "park",
+    "file": "signs/park_250507_59.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "per_dag",
+    "file": "signs/per_dag_250507_11.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "PROBEREN-E",
+    "file": "signs/PROBEREN-E_250226_2.glb",
+    "start": 50,
+    "end": 117
+  },
+  {
+    "name": "raadpleeg",
+    "file": "signs/raadpleeg_250507_33.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "school",
+    "file": "signs/school_250507_57.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "SCHOOL",
+    "file": "signs/SCHOOL-D_250226_1.glb",
+    "start": 40,
+    "end": 110
+  },
+  {
+    "name": "SCHULDGEVEN",
+    "file": "signs/SCHULDGEVEN_250226_1.glb",
+    "start": 50,
+    "end": 90
+  },
+  {
+    "name": "slik",
+    "file": "signs/slik_250507_9.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "speeltuin",
+    "file": "signs/speeltuin_250507_60.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "step",
+    "file": "signs/step_250507_56.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "temperatuur",
+    "file": "signs/temperatuur_250507_21.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "test",
+    "file": "signs/test_250507_1.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "TEST-SIGN",
+    "file": "signs/TEST-SIGN_250523_1.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "uur",
+    "file": "signs/uur_250507_50.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "veiligheid",
+    "file": "signs/veiligheid_250507_8.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "verboden",
+    "file": "signs/verboden_250507_5.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "vermijd",
+    "file": "signs/vermijd_250507_44.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "voedsel",
+    "file": "signs/voedsel_250507_24.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "volwassenen",
+    "file": "signs/volwassenen_250507_38.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "VRAGEN-A",
+    "file": "signs/VRAGEN-A_250226_1.glb",
+    "start": 65,
+    "end": 130
+  },
+  {
+    "name": "WACHTEN-B",
+    "file": "signs/WACHTEN-B_250226_1.glb",
+    "start": 90,
+    "end": 103
+  },
+  {
+    "name": "wachten-modified",
+    "file": "signs/wachten-modified.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "werking",
+    "file": "signs/werking_250507_47.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "winkel",
+    "file": "signs/winkel_250507_58.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "zon_licht",
+    "file": "signs/zon_licht_250507_20.glb",
+    "start": 90,
+    "end": 130
+  },
+  {
+    "name": "zwangerschap",
+    "file": "signs/zwangerschap_250507_28.glb",
+    "start": 60,
+    "end": 120
+  }
+]
