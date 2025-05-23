@@ -23,7 +23,7 @@ A comprehensive web application for editing, blending, and animating sign langua
 
 1. **Clone or download the project**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/rem0g/blendAnims
    cd SignBlendingInterface
    ```
 
@@ -32,13 +32,32 @@ A comprehensive web application for editing, blending, and animating sign langua
    npm install
    ```
 
-3. **Start the development server**:
+3. **Start the development environment**:
+   
+   **Option A: Full Development Setup (Recommended)**
    ```bash
-   npm start
+   npm run dev-full
+   ```
+   This command starts both the Vite development server and the API server concurrently.
+
+   **Option B: Manual Setup**
+   
+   Start the API server (required for save functionality):
+   ```bash
+   npm run api-server
+   ```
+   
+   In a separate terminal, start the Vite development server:
+   ```bash
+   npm run dev
    ```
 
 4. **Open your browser**:
-   Navigate to `http://localhost:3000` to access the application.
+   Navigate to `http://localhost:5173` (Vite dev server) to access the application.
+   
+   **Server Endpoints:**
+   - Frontend: `http://localhost:5173`
+   - API Server: `http://localhost:3001`
 
 ### Project Structure
 
@@ -113,11 +132,48 @@ Signs are stored in `src/signs.json` with the following structure:
 
 ### Running in Development Mode
 
+**Full Development Environment (Recommended):**
 ```bash
-npm start
+npm run dev-full
+```
+This starts both the Vite development server (frontend) and the API server (backend) simultaneously.
+
+**Manual Development Setup:**
+```bash
+# Terminal 1: Start API server
+npm run api-server
+
+# Terminal 2: Start frontend development server
+npm run dev
 ```
 
-This starts a local development server with hot-reloading enabled.
+### API Server Details
+
+The API server (`api-server.js`) provides endpoints for:
+- **Saving Signs**: `POST /api/signs` - Persists changes to `src/signs.json`
+- **Health Check**: `GET /api/health` - Server status verification
+
+**Server Configuration:**
+- **Port**: 3001 (configurable via `PORT` environment variable)
+- **CORS**: Enabled for all origins during development
+- **Auto-backup**: Creates timestamped backups before saving changes
+
+**Environment Variables:**
+```bash
+PORT=3001          # API server port (default: 3001)
+NODE_ENV=development   # Environment mode
+```
+
+### Available Scripts
+
+```bash
+npm run dev-full        # Start both frontend and API server (recommended)
+npm run dev            # Start only the frontend development server  
+npm run api-server     # Start only the API server
+npm run build          # Build the application for production
+npm run preview        # Preview the production build
+npm run update-signs   # Update signs database from external source
+```
 
 ### Building for Production
 
@@ -144,15 +200,22 @@ Creates an optimized production build in the `dist/` directory.
 
 ### Common Issues
 
-1. **Animation not loading**: Ensure animation files are present in the assets directory
-2. **Save button not working**: Check browser console for network errors
+1. **Animation not loading**: Ensure animation files are present in the `public/signs/` directory
+2. **Save button not working**: 
+   - Check that the API server is running (`npm run api-server`)
+   - Verify the API server is accessible at `http://localhost:3001`
+   - Check browser console for network errors
 3. **Sliders not responding**: Verify JavaScript is enabled in your browser
+4. **CORS errors**: Ensure both servers are running on the correct ports
 
 ### Development Issues
 
-1. **Port already in use**: Change the port in package.json or kill the existing process
+1. **Port already in use**: 
+   - Frontend (5173): Change the port in `vite.config.js` or kill the existing process
+   - API Server (3001): Set `PORT` environment variable or kill the existing process
 2. **Dependencies not installing**: Clear npm cache with `npm cache clean --force`
 3. **Build failures**: Ensure Node.js version is 14 or higher
+4. **API server not starting**: Check that ports 3001 is available and dependencies are installed
 
 ## Contributing
 
