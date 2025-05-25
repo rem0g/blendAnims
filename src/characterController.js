@@ -6,6 +6,7 @@ import {
   ImportAnimationsAsync,
 } from "babylonjs";
 import { availableSigns, availableSignsMap } from "./availableSigns.js";
+import EyeBlinkController from "./eyeBlinkController.js";
 
 // Class to load and control the character
 class CharacterController {
@@ -48,19 +49,23 @@ class CharacterController {
   }
 
   async loadMesh() {
-    const characterMesh = await ImportMeshAsync(
+    const loadedResults = await ImportMeshAsync(
       "glassesGuySignLab.glb",
       this.scene
     );
 
-    console.log("Character mesh loaded:", characterMesh);
+    console.log("Character mesh loaded:", loadedResults);
+
+    // Eye blinking does not work yet
+    // const eyeBlinkController = new EyeBlinkController(loadedResults);
+    // eyeBlinkController.createEyeBlinkAnimation(this.scene);
 
     // Always select the character mesh as active mesh
-    characterMesh.meshes.forEach((mesh) => {
+    loadedResults.meshes.forEach((mesh) => {
       mesh.alwaysSelectAsActiveMesh = true;
     });
 
-    return characterMesh;
+    return loadedResults;
   }
 
   // Load a single animation
@@ -95,7 +100,7 @@ class CharacterController {
       );
 
       // Find the animationgroup that was just loaded
-      var myAnimation = result.animationGroups.find(
+      let myAnimation = result.animationGroups.find(
         (x, i) => x.name === "Unreal Take" && i != 0
       );
 
@@ -107,6 +112,37 @@ class CharacterController {
       // Hard trim of the animation
       myAnimation = this.hardTrim(myAnimation, startFrame, endFrame);
 
+      // Remove the animation from the hips
+      // console.log("Animation group before removing hips:", myAnimation);
+      // myAnimation.targetedAnimations[0].animation.keys = [];
+      myAnimation.targetedAnimations.forEach(targetedAnim => {
+          if (targetedAnim.target !== null && targetedAnim.animation !== null) {
+              if (targetedAnim.target.name === "Hips") {
+                console.log("Removing hips animation:", targetedAnim);
+                  if (targetedAnim.animation.targetProperty === "rotationQuaternion") {
+                      targetedAnim.animation._keys.forEach(key => {
+                          key.value.x = 0;
+                          key.value.y = 0;
+                          key.value.z = 0;
+                      });
+
+                      console.log("Hips rotation disabled.");
+                  } else if (targetedAnim.animation.targetProperty === "position") {
+                      targetedAnim.animation._keys.forEach(key => {
+                          key.value.x = 0;
+                          key.value.y = 0;
+                          key.value.z = 1;
+                      });
+
+                      console.log("Hips position disabled.");
+                  }
+              }
+          }
+      });
+
+                    
+      
+      console.log("Animation group after removing hips:", myAnimation);
       // Rename the animationgroup to the signName
       myAnimation.name = signName;
 
@@ -246,7 +282,7 @@ class CharacterController {
     animationGroup.parent = this.rootMesh;
 
     // Rotate the root mesh 90 degrees on the X axis
-    this.rootMesh.rotation = new Vector3(Math.PI / 2, Math.PI, 0);
+    // this.rootMesh.rotation = new Vector3(Math.PI / 2, Math.PI, 0);
 
     // Adjust the position of the root mesh to be in the center of the scene
     this.rootMesh.position = new Vector3(0, 0, -0.25);

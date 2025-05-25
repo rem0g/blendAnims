@@ -68,8 +68,9 @@ class AnimationController {
       const playNextAnimation = () => {
         // Remove any existing observer
         if (this._currentAnimObserver) {
+          console.log(animationGroups, currentIndex)
           animationGroups[
-            currentIndex - 1
+            currentIndex
           ].onAnimationGroupEndObservable.remove(this._currentAnimObserver);
           this._currentAnimObserver = null;
         }

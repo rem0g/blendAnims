@@ -1,3 +1,3 @@
 # SignBlendingInterface
 
-This is an interface interpolate single sign language animations.
+This is an interface to interpolate single sign language animations.

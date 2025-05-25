@@ -103,22 +103,6 @@ class UIController {
     };
     headerContainer.appendChild(blendingToggleButton);
 
-    // Create button to record the sequence
-    const recordButton = document.createElement("button");
-    recordButton.className = "record-button";
-    recordButton.innerHTML = this.isRecording
-      ? "Do not record sequence"
-      : "Record Sequence";
-    recordButton.title = "Record Sequence";
-    recordButton.onclick = () => {
-      this.isRecording = true;
-      recordButton.classList.toggle("active", this.isRecording);
-      recordButton.innerHTML = this.isRecording
-        ? "Do not record sequence"
-        : "Record Sequence";
-    };
-    headerContainer.appendChild(recordButton);
-
     // Create the blending settings panel (hidden by default)
     this.blendingPanel = document.createElement("div");
     this.blendingPanel.className = "blending-settings-panel";

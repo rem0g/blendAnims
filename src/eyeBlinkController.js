@@ -1,35 +1,39 @@
 class EyeBlinkController {
-  constructor() {}
+  constructor(loadedResults) {
+    this.loadedResults = loadedResults;
+  }
 
   //   Controller or just regular fucntions?
 
-  createEyeBlinkAnimation(scene, characterController) {
+  createEyeBlinkAnimation(scene) {
     // Get the morph targets for the eyes
-    var morph1 = morphTargetManager.getTargetByName("eyeBlinkLeft");
-    var morph2 = morphTargetManager.getTargetByName("eyeBlinkRight");
-    morph1 = morph1 != null ? morph1 : morphTargetManager.getTarget(57);
-    morph2 = morph2 != null ? morph2 : morphTargetManager.getTarget(58);
+    // var morph1 = morphTargetManager.getTargetByName("eyeBlinkLeft");
+    // var morph2 = morphTargetManager.getTargetByName("eyeBlinkRight");
+    // morph1 = morph1 != null ? morph1 : morphTargetManager.getTarget(57);
+    // morph2 = morph2 != null ? morph2 : morphTargetManager.getTarget(58);
 
-    if (!morph1 || !morph2) {
-      console.warn("Morph targets for eyes not found");
-      return;
-    }
+    // if (!morph1 || !morph2) {
+    //   console.warn("Morph targets for eyes not found");
+    //   return;
+    // }
     // Create the eye blink animation
-    this.eyeBlinkAnimation(morph1, morph2);
+
+    console.log(this.morph1);
+    this.eyeBlinkAnimation(this.morph1, this.morph2);
 
     // Start the animation
     scene.beginAnimation(
-      morph1,
+      this.morph1,
       0,
-      morph1.animations[0].getKeys().at(-1).frame,
+      this.morph1.animations[0].getKeys().at(-1).frame,
       true
     );
-    scene.beginAnimation(
-      morph2,
-      0,
-      morph2.animations[0].getKeys().at(-1).frame,
-      true
-    );
+    // scene.beginAnimation(
+    //   morph2,
+    //   0,
+    //   morph2.animations[0].getKeys().at(-1).frame,
+    //   true
+    // );
   }
 
   eyeBlinkAnimation(morph1, morph2) {
@@ -70,7 +74,7 @@ class EyeBlinkController {
 
     // Apply the animation to both eye morph targets
     morph1.animations = [blinkAnimation];
-    morph2.animations = [blinkAnimation];
+    // morph2.animations = [blinkAnimation];
   }
 
   // Function to stop the eye blink animation
@@ -94,3 +98,5 @@ class EyeBlinkController {
     morph2.animations = [];
   }
 }
+
+export default EyeBlinkController;
