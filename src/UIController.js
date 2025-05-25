@@ -56,18 +56,6 @@ class UIController {
     };
     document.body.appendChild(showButton);
 
-    // Create cross to close the UI
-    const closeButton = document.createElement("button");
-    closeButton.className = "close-button";
-    closeButton.innerHTML = "✖"; // Cross icon
-    closeButton.title = "Close UI";
-    closeButton.onclick = () => {
-      this.container.style.display = "none"; // Hide the UI
-      showButton.style.display = "block"; // Show the show button
-    };
-    this.container.appendChild(closeButton);
-
-
     // Create the header with title and settings button
     const headerContainer = document.createElement("div");
     headerContainer.className = "ui-header";
@@ -77,15 +65,7 @@ class UIController {
     this.title = document.createElement("h1");
     this.title.className = "ui-title";
     this.title.textContent = "Sign Language Sequencer";
-    this.container.appendChild(this.title);
-
-    // Create the blending settings button
-    const blendingSettingsButton = document.createElement("button");
-    blendingSettingsButton.className = "blending-settings-button";
-    blendingSettingsButton.innerHTML = "⚙️"; // Gear icon
-    blendingSettingsButton.title = "Blending Settings";
-    // blendingSettingsButton.onclick =
-    headerContainer.appendChild(blendingSettingsButton);
+    headerContainer.appendChild(this.title);
 
     // Create the blending toggle button
     const blendingToggleButton = document.createElement("button");
@@ -102,6 +82,19 @@ class UIController {
         : "Enable Blending";
     };
     headerContainer.appendChild(blendingToggleButton);
+
+        // Create cross to close the UI
+    const closeButton = document.createElement("button");
+    closeButton.className = "close-button";
+    closeButton.innerHTML = "✖"; // Cross icon
+    closeButton.title = "Close UI";
+    closeButton.onclick = () => {
+      this.container.style.display = "none"; // Hide the UI
+      showButton.style.display = "block"; // Show the show button
+    };
+    headerContainer.appendChild(closeButton);
+
+
 
     // Create the blending settings panel (hidden by default)
     this.blendingPanel = document.createElement("div");

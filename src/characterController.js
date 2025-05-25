@@ -4,9 +4,13 @@ import {
   Vector3,
   SceneLoader,
   ImportAnimationsAsync,
+  Animation,
+  RuntimeAnimation,
 } from "babylonjs";
 import { availableSigns, availableSignsMap } from "./availableSigns.js";
 import EyeBlinkController from "./eyeBlinkController.js";
+
+
 
 // Class to load and control the character
 class CharacterController {
@@ -30,22 +34,6 @@ class CharacterController {
       this.characterMesh,
       this.character.skeletons[0]
     );
-  }
-
-  lockHips() {
-    console.log("Skeletons:", this.character.skeletons);
-    if (this.character.skeletons[0]) {
-      const hipBone = this.character.skeletons[0].bones.find(
-        (bone) => bone.name === "Hips"
-      );
-
-      if (hipBone) {
-        hipBone.setPosition(new Vector3(0, 1, 0), BABYLON.Space.WORLD);
-        hipBone.setRotation(new Vector3(0, 0, 0), BABYLON.Space.WORLD);
-      }
-
-      // translatie van de hips verwijderen bij inladen
-    }
   }
 
   async loadMesh() {
@@ -107,16 +95,22 @@ class CharacterController {
       // Non-destructive trim of the animation
       // myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
 
+      // TODO: make this dynamic, so it can be changed in the UI
       const startFrame = availableSignsMap[signName].start;
       const endFrame = availableSignsMap[signName].end;
       // Hard trim of the animation
       myAnimation = this.hardTrim(myAnimation, startFrame, endFrame);
+
+      // const easingFunction = new BABYLON.BackEase(10);
+      // easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEIN);
 
       // Remove the animation from the hips
       // console.log("Animation group before removing hips:", myAnimation);
       // myAnimation.targetedAnimations[0].animation.keys = [];
       myAnimation.targetedAnimations.forEach(targetedAnim => {
           if (targetedAnim.target !== null && targetedAnim.animation !== null) {
+              // targetedAnim.animation.setEasingFunction(easingFunction);
+
               if (targetedAnim.target.name === "Hips") {
                 console.log("Removing hips animation:", targetedAnim);
                   if (targetedAnim.animation.targetProperty === "rotationQuaternion") {
@@ -138,11 +132,8 @@ class CharacterController {
                   }
               }
           }
-      });
-
-                    
+      });        
       
-      console.log("Animation group after removing hips:", myAnimation);
       // Rename the animationgroup to the signName
       myAnimation.name = signName;
 

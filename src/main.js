@@ -47,7 +47,7 @@ uiController.init();
 // Load an initial animation as an example
 // await characterController.loadAnimation('HALLO');
 
-scene.debugLayer.show();
+// scene.debugLayer.show();
 
 // Render
 engine.runRenderLoop(function () {

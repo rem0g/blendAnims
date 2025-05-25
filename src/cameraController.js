@@ -58,6 +58,9 @@ class CameraController {
     sphere.position = bonePosition;
     // sphere.attachToBone(bone, targetMesh);
 
+    // Make the sphere invisible
+    sphere.isVisible = false;
+
     this.camera.target = sphere;
   }
 }

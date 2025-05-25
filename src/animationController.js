@@ -1,3 +1,4 @@
+
 // Class to contol the animations of the avatar
 class AnimationController {
   constructor(scene, characterController, isPlaying, recorder) {
@@ -71,7 +72,7 @@ class AnimationController {
           console.log(animationGroups, currentIndex)
           animationGroups[
             currentIndex
-          ].onAnimationGroupEndObservable.remove(this._currentAnimObserver);
+          ]?.onAnimationGroupEndObservable?.remove(this._currentAnimObserver);
           this._currentAnimObserver = null;
         }
 
@@ -95,7 +96,8 @@ class AnimationController {
             const anim = targetedAnim.animation;
 
             anim.enableBlending = true;
-            anim.blendingSpeed = 0.05;
+            // max blending speed 0.13, min 0.02
+            anim.blendingSpeed = 0.05; // Set blending speed
           });
 
           console.log("Animation", currentAnimation);
