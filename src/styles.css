@@ -31,6 +31,12 @@ body {
   top: 10px;
   right: 10px;
   z-Index: 1000;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
 }
 
 /* === Typography === */
@@ -161,6 +167,7 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 /* === Sequence Area === */
 .sequence-drop-area {
   flex: 1;
