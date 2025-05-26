@@ -18,12 +18,15 @@ class CameraController {
     );
     this.camera.attachControl(canvas, true);
 
-    this.camera.upperRadiusLimit = 10;
+    // Set camera properties
+    this.camera.upperRadiusLimit = 5;
     this.camera.lowerRadiusLimit = 1;
     this.camera.minZ = 0.01;
     this.camera.checkCollisions = false;
     this.camera.noRotationConstraint = true;
-    // TODO: Scroll speed
+    
+    // Scroll speed
+    this.camera.wheelPrecision = 100;
   }
 
   getPosition() {
