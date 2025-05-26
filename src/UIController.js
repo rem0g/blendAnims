@@ -49,7 +49,7 @@ class UIController {
     showButton.title = "Show UI";
 
     // Hide button when UI is open
-    showButton.style.display = "none";    
+    showButton.style.display = "none";
     showButton.onclick = () => {
       this.container.style.display = "block"; // Show the UI
       showButton.style.display = "none"; // Hide the show button
@@ -83,7 +83,7 @@ class UIController {
     };
     headerContainer.appendChild(blendingToggleButton);
 
-        // Create cross to close the UI
+    // Create cross to close the UI
     const closeButton = document.createElement("button");
     closeButton.className = "close-button";
     closeButton.innerHTML = "✖"; // Cross icon
@@ -94,17 +94,11 @@ class UIController {
     };
     headerContainer.appendChild(closeButton);
 
-
-
     // Create the blending settings panel (hidden by default)
     this.blendingPanel = document.createElement("div");
     this.blendingPanel.className = "blending-settings-panel";
     this.blendingPanel.style.display = "none";
     this.container.appendChild(this.blendingPanel);
-
-    // Add settings content
-    // this.createBlendingSettingsPanel();
-    this.createRootContainer();
 
     // Create two-column layout
     const mainLayout = document.createElement("div");
@@ -220,23 +214,6 @@ class UIController {
     sequenceColumn.appendChild(sequenceDropArea);
   }
 
-  createRootContainer() {
-    this.rootContainer = new Grid("grid");
-    // this.rootContainer =
-  }
-
-  // Create blending settings panel
-  createBlendingSettingsPanel() {
-    const panelTitle = document.createElement("h3");
-    panelTitle.textContent = "Animation Blending Settings";
-    this.blendingPanel.appendChild(panelTitle);
-
-    // Blending speed slider using GUI
-    this.slider = new BABYLON.GUI.Slider();
-    this.slider.vericalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BELOW;
-    this.slider.width = "50%";
-  }
-
   // Filter the sign library based on search input
   filterSignLibrary() {
     const searchInput = document.querySelector(".search-input");
@@ -285,7 +262,17 @@ class UIController {
       nameSpan.textContent = sign.name;
       signInfo.appendChild(nameSpan);
 
+      // Frame info display
+      const frameInfo = document.createElement("span");
+      frameInfo.className = "sign-description";
+      frameInfo.textContent = `Frames: ${sign.start} - ${sign.end}`;
+      signInfo.appendChild(frameInfo);
+
       signItem.appendChild(signInfo);
+
+      // Controls container
+      const controls = document.createElement("div");
+      controls.className = "sign-controls";
 
       // Play button
       const playButton = document.createElement("button");
@@ -296,7 +283,20 @@ class UIController {
         console.log(`Playing sign: ${sign.name}`);
         this.animationController.playSign(sign.name);
       };
-      signItem.appendChild(playButton);
+      controls.appendChild(playButton);
+
+      // Edit frames button
+      const editButton = document.createElement("button");
+      editButton.className = "edit-button";
+      editButton.innerHTML = "⚙";
+      editButton.title = `Edit frames for "${sign.name}"`;
+      editButton.onclick = (e) => {
+        e.stopPropagation(); // Prevent dragging when clicking edit
+        this.showFrameEditor(sign, frameInfo);
+      };
+      controls.appendChild(editButton);
+
+      signItem.appendChild(controls);
 
       // Add to library
       library.appendChild(signItem);
@@ -407,6 +407,16 @@ class UIController {
       playButton.onclick = () =>
         this.animationController.playSign(item.sign.name);
       controls.appendChild(playButton);
+
+      const editButton = document.createElement("button");
+      editButton.className = "edit-button small-button";
+      editButton.innerHTML = "⚙";
+      editButton.title = `Edit frames for "${item.sign.name}"`;
+      editButton.onclick = (e) => {
+        e.stopPropagation(); // Prevent dragging when clicking edit
+        this.showFrameEditor(item.sign, signInfo);
+      };
+      controls.appendChild(editButton);
 
       // Remove button
       const removeButton = document.createElement("button");
@@ -541,6 +551,228 @@ class UIController {
     // Update the UI
     this.updateSequenceUI();
   }
+
+   // Show frame editor modal for a specific sign
+  showFrameEditor(sign, frameInfoElement) {
+    // Create modal overlay
+    const modal = document.createElement("div");
+    modal.className = "frame-editor-modal";
+    modal.innerHTML = `
+      <div class="frame-editor-content">
+        <div class="frame-editor-header">
+          <h3>Edit Frame Timing - ${sign.name}</h3>
+          <button class="frame-editor-close">×</button>
+        </div>
+        <div class="frame-editor-body">
+          <div class="frame-control">
+            <label for="start-frame">Start Frame: <span id="start-value">${sign.start}</span></label>
+            <input type="range" id="start-frame" value="${sign.start}" min="0" max="200" step="1" class="frame-slider">
+          </div>
+          <div class="frame-control">
+            <label for="end-frame">End Frame: <span id="end-value">${sign.end}</span></label>
+            <input type="range" id="end-frame" value="${sign.end}" min="1" max="250" step="1" class="frame-slider">
+          </div>
+          <div class="frame-preview">
+            <p>Original: ${sign.start} - ${sign.end} (${sign.end - sign.start} frames)</p>
+            <div class="frame-preview-live">
+              <p id="frame-preview-text">Preview: ${sign.start} - ${sign.end} (${sign.end - sign.start} frames)</p>
+            </div>
+          </div>
+          <div class="frame-editor-actions">
+            <button class="test-button">🎬 Test Animation</button>
+            <button class="save-button">💾 Save Changes</button>
+            <button class="cancel-button">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Get elements
+    const startInput = modal.querySelector("#start-frame");
+    const endInput = modal.querySelector("#end-frame");
+    const startValueSpan = modal.querySelector("#start-value");
+    const endValueSpan = modal.querySelector("#end-value");
+    const previewText = modal.querySelector("#frame-preview-text");
+    const closeButton = modal.querySelector(".frame-editor-close");
+    const testButton = modal.querySelector(".test-button");
+    const saveButton = modal.querySelector(".save-button");
+    const cancelButton = modal.querySelector(".cancel-button");
+
+    // Update preview when sliders change
+    const updatePreview = () => {
+      const start = parseInt(startInput.value) || 0;
+      const end = parseInt(endInput.value) || 1;
+      const duration = Math.max(0, end - start);
+      
+      // Update value displays
+      startValueSpan.textContent = start;
+      endValueSpan.textContent = end;
+      previewText.textContent = `Preview: ${start} - ${end} (${duration} frames)`;
+      
+      // Validate inputs
+      if (start >= end) {
+        previewText.style.color = '#F44336';
+        saveButton.disabled = true;
+        testButton.disabled = true;
+      } else {
+        previewText.style.color = '#333';
+        saveButton.disabled = false;
+        testButton.disabled = false;
+      }
+    };
+
+    // Real-time updates as user drags sliders
+    startInput.addEventListener("input", updatePreview);
+    endInput.addEventListener("input", updatePreview);
+
+    // Auto-test animation when user stops sliding (debounced)
+    let autoTestTimeout;
+    const autoTestAnimation = () => {
+      const newStart = parseInt(startInput.value) || 0;
+      const newEnd = parseInt(endInput.value) || 1;
+      
+      if (newStart >= newEnd) return;
+
+      // Clear any existing timeout
+      clearTimeout(autoTestTimeout);
+      
+      // Set a new timeout to test after user stops sliding for 800ms
+      autoTestTimeout = setTimeout(async () => {
+        // Temporarily update the sign data for testing
+        const originalStart = sign.start;
+        const originalEnd = sign.end;
+        
+        sign.start = newStart;
+        sign.end = newEnd;
+        
+        // Clear the cached animation for this sign to force reload
+        this.clearCachedAnimation(sign.name);
+        
+        try {
+          await this.animationController.playSign(sign.name);
+        } catch (error) {
+          console.error('Error auto-testing animation:', error);
+        }
+        
+        // Restore original values after test
+        sign.start = originalStart;
+        sign.end = originalEnd;
+        
+        // Clear the test animation to avoid confusion
+        this.clearCachedAnimation(sign.name);
+      }, 800); // Wait 800ms after user stops sliding
+    };
+
+    startInput.addEventListener("input", autoTestAnimation);
+    endInput.addEventListener("input", autoTestAnimation);
+
+    // Close modal function
+    const closeModal = () => {
+      // Clear any pending auto-test timeout
+      if (autoTestTimeout) {
+        clearTimeout(autoTestTimeout);
+      }
+      document.body.removeChild(modal);
+    };
+
+    // Event handlers
+    closeButton.onclick = closeModal;
+    cancelButton.onclick = closeModal;
+    
+    // Click outside to close
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    };
+
+    // Test animation with new frame values
+    testButton.onclick = async () => {
+      const newStart = parseInt(startInput.value) || 0;
+      const newEnd = parseInt(endInput.value) || 1;
+      
+      if (newStart >= newEnd) return;
+
+      // Show loading state
+      testButton.disabled = true;
+      testButton.innerHTML = "🎬 Testing...";
+
+      // Temporarily update the sign data for testing
+      const originalStart = sign.start;
+      const originalEnd = sign.end;
+      
+      sign.start = newStart;
+      sign.end = newEnd;
+      
+      try {
+        await this.animationController.playSign(sign.name);
+      } catch (error) {
+        console.error('Error testing animation:', error);
+        this.showNotification('⚠️ Error testing animation', 'error');
+      }
+      
+      // Restore original values after test
+      sign.start = originalStart;
+      sign.end = originalEnd;
+      
+      // Clear the test animation to avoid confusion
+      this.clearCachedAnimation(sign.name);
+      
+      // Restore button state
+      testButton.disabled = false;
+      testButton.innerHTML = "🎬 Test Animation";
+    };
+
+    // Save changes
+    saveButton.onclick = async () => {
+      const newStart = parseInt(startInput.value) || 0;
+      const newEnd = parseInt(endInput.value) || 1;
+      
+      if (newStart >= newEnd) {
+        this.showNotification('End frame must be greater than start frame!', 'error');
+        return;
+      }
+
+      // Show loading state
+      saveButton.disabled = true;
+      saveButton.innerHTML = "💾 Saving...";
+
+      try {
+        // Clear the cached animation for this sign before updating
+        this.clearCachedAnimation(sign.name);
+
+        // Update the sign data
+        sign.start = newStart;
+        sign.end = newEnd;
+        
+        // Update the global signs map to keep everything in sync
+        this.updateSignInMap(sign.name, newStart, newEnd);
+        
+        // Update the frame info display
+        frameInfoElement.textContent = `Frames: ${sign.start} - ${sign.end}`;
+        
+        // Save to JSON file without reloading the page
+        await this.saveSignsToFile();
+        
+        closeModal();
+      } catch (error) {
+        console.error('Error saving changes:', error);
+        this.showNotification('Error saving changes', 'error');
+        
+        // Restore button state
+        saveButton.disabled = false;
+        saveButton.innerHTML = "💾 Save Changes";
+      }
+    };
+
+    // Focus on the modal (for keyboard accessibility)
+    modal.focus();
+  }
+
+
+
 }
 
 export default UIController;

@@ -91,15 +91,15 @@ class CharacterController {
       let myAnimation = result.animationGroups.find(
         (x, i) => x.name === "Unreal Take" && i != 0
       );
-
-      // Non-destructive trim of the animation
-      // myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
-
-      // TODO: make this dynamic, so it can be changed in the UI
       const startFrame = availableSignsMap[signName].start;
       const endFrame = availableSignsMap[signName].end;
+
+      // Non-destructive trim of the animation
+      myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
+
+      // TODO: make this dynamic, so it can be changed in the UI
       // Hard trim of the animation
-      myAnimation = this.hardTrim(myAnimation, startFrame, endFrame);
+      // myAnimation = this.hardTrim(myAnimation, startFrame, endFrame);
 
       // const easingFunction = new BABYLON.BackEase(10);
       // easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEIN);
