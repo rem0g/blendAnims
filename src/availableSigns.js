@@ -11,6 +11,7 @@ export const availableSigns = [
     { name: "SCHULDGEVEN", file: "signs/SCHULDGEVEN_250226_1.glb", start: 50, end: 90 },
     { name: "VRAGEN-A", file: "signs/VRAGEN-A_250226_1.glb", start: 65, end: 100 },
     { name: "WACHTEN-B", file: "signs/WACHTEN-B_250226_1.glb", start: 30, end: 103 },
+    {name: "lelystad", file: "signs/LELYSTAD_250314_1_GlassesGuyRecord_C_1.glb", start:55, end: 130 },
   ];
 
 

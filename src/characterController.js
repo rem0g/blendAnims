@@ -137,6 +137,9 @@ class CharacterController {
       // Rename the animationgroup to the signName
       myAnimation.name = signName;
 
+      // Blendshape van ogen uitzetten
+      // ogen zetten op camera
+
       return myAnimation;
     } catch (error) {
       console.error("Error in loadAnimation:", error.message);

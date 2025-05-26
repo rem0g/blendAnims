@@ -23,6 +23,7 @@ class CameraController {
     this.camera.minZ = 0.01;
     this.camera.checkCollisions = false;
     this.camera.noRotationConstraint = true;
+    // TODO: Scroll speed
   }
 
   getPosition() {
