@@ -8,52 +8,69 @@ import UIController from "./UIController.js";
 import { availableSigns } from "./availableSigns.js";
 import { GLTFLoaderAnimationStartMode } from "babylonjs-loaders";
 
-
 // Set the animation start mode to NONE
 // This is a workaround to fix the bug where the animation starts playing automatically
 BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (loader) {
   if (loader.name === "gltf") {
-      loader.animationStartMode = GLTFLoaderAnimationStartMode.NONE;
+    loader.animationStartMode = GLTFLoaderAnimationStartMode.NONE;
   }
 });
 
-// Make scene
-const {canvas, engine, scene, cameraController, light, ground} = await createScene();
+(async function () {
+  // Make scene
+  const { canvas, engine, scene, cameraController, light, ground } =
+    await createScene();
 
-console.log("Scene created:", scene);
+  console.log("Scene created:", scene);
 
-const cameraPosition = cameraController.getPosition();
+  const cameraPosition = cameraController.getPosition();
 
-cameraController.setPosition(cameraPosition.x, cameraPosition.y + 1, cameraPosition.z);
+  cameraController.setPosition(
+    cameraPosition.x,
+    cameraPosition.y + 1,
+    cameraPosition.z
+  );
 
-const isPlaying = false;
+  const isPlaying = false;
 
-const recorder = new BABYLON.VideoRecorder(engine, scene, {
-  fps: 60,
-  mimeType: "video/webm" // or "video/webm;codecs=vp9"
-});
+  const recorder = new BABYLON.VideoRecorder(engine, scene, {
+    fps: 60,
+    mimeType: "video/webm", // or "video/webm;codecs=vp9"
+  });
 
-// Initialize character controller
-const characterController = new CharacterController(scene, cameraController, isPlaying);
-await characterController.init();
+  // Initialize character controller
+  const characterController = new CharacterController(
+    scene,
+    cameraController,
+    isPlaying
+  );
+  await characterController.init();
 
-const animationController = new AnimationController(scene, characterController, isPlaying, recorder);
-console.log("Recorder", recorder);
+  const animationController = new AnimationController(
+    scene,
+    characterController,
+    isPlaying,
+    recorder
+  );
+  console.log("Recorder", recorder);
 
-// Initialize the UI controller and pass the character controller to it
-const uiController = new UIController(scene, availableSigns, characterController, animationController, isPlaying);
-uiController.init();
+  // Initialize the UI controller and pass the character controller to it
+  const uiController = new UIController(
+    scene,
+    availableSigns,
+    characterController,
+    animationController,
+    isPlaying
+  );
+  uiController.init();
 
-// Load an initial animation as an example
-// await characterController.loadAnimation('HALLO');
+  // Load an initial animation as an example
+  // await characterController.loadAnimation('HALLO');
 
-// scene.debugLayer.show();
+  // scene.debugLayer.show();
 
-// Render
-engine.runRenderLoop(function () {
+  // Render
+  engine.runRenderLoop(function () {
     scene.render();
-});
-
-
-
-
+  });
+})();
