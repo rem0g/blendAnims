@@ -33,10 +33,7 @@ BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (loader) {
 
   const isPlaying = false;
 
-  const recorder = new BABYLON.VideoRecorder(engine, scene, {
-    fps: 60,
-    mimeType: "video/webm", // or "video/webm;codecs=vp9"
-  });
+
 
   // Initialize character controller
   const characterController = new CharacterController(
@@ -47,12 +44,11 @@ BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (loader) {
   await characterController.init();
 
   const animationController = new AnimationController(
+    engine,
     scene,
     characterController,
-    isPlaying,
-    recorder
+    isPlaying
   );
-  console.log("Recorder", recorder);
 
   // Initialize the UI controller and pass the character controller to it
   const uiController = new UIController(

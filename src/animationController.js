@@ -1,11 +1,11 @@
 // Class to contol the animations of the avatar
 class AnimationController {
-  constructor(scene, characterController, isPlaying, recorder) {
+  constructor(engine, scene, characterController, isPlaying) {
+    this.engine = engine;
     this.scene = scene;
     this.characterController = characterController;
     this.isPlaying = isPlaying;
     this.transitionDuration = 0.5; // Duration for blending animations hardcoded for now
-    this.recorder = recorder;
   }
 
   // Initialize the AnimationController
@@ -60,6 +60,7 @@ class AnimationController {
     const recordButton = document.getElementById("record-sequence-button");
     if (recordButton) {
       recordButton.disabled = true;
+      recordButton.innerHTML = isRecording ? "Recording..." : "Record Sequence";
     }
 
     // Disable clear button during playback
@@ -69,6 +70,30 @@ class AnimationController {
     }
 
     this.isPlaying = true;
+
+    if (isRecording) {
+      console.log("Starting video recording...");
+      const recorder = new BABYLON.VideoRecorder(this.engine, this.scene, {
+        fps: 60,
+        mimeType: "video/webm", // or "video/webm;codecs=vp9"
+      });
+
+      console.log("Video recorder created:", recorder);
+
+      if (!recorder) {
+        console.error("Failed to create video recorder");
+        return;
+      }
+      this.recorder = recorder;
+
+      // Try to start recording
+      if (this.recorder) {
+        console.log("Starting recording...");
+        const animationNames = signNames.join("-") + ".webm"; // Use the sign names as the filename
+        this.recorder.startRecording(animationNames, 60);
+        console.log("Recording started successfully", this.recorder);
+      }
+    }
 
     try {
       // Load all animation groups for blending
@@ -101,20 +126,16 @@ class AnimationController {
           // Enable blending for all targeted animations
           currentAnimation.targetedAnimations.forEach((targetedAnim) => {
             const anim = targetedAnim.animation;
-
             anim.enableBlending = true;
             // max blending speed 0.13, min 0.02
             anim.blendingSpeed = 0.05; // Set blending speed
           });
-
-          console.log("Animation", currentAnimation);
         }
 
         // Highlight the current item
         const sequenceItem = document.getElementById(
           `sequence-item-${currentIndex + 1}`
         );
-        console.log("Sequence item", sequenceItem);
         if (sequenceItem) {
           sequenceItem.classList.add("playing");
         }
@@ -122,7 +143,6 @@ class AnimationController {
         // Set up observer for when this animation ends
         if (currentIndex < animationGroups.length - 1) {
           currentAnimation.onAnimationGroupEndObservable.add(() => {
-            console.log("Animation ended", currentIndex);
             currentIndex++;
             // Remove highlight
             if (sequenceItem) {
@@ -132,24 +152,25 @@ class AnimationController {
           });
         } else {
           // Last animation
-          currentAnimation.onAnimationGroupEndObservable.add(() => {
+          currentAnimation.onAnimationGroupEndObservable.add(async () => {
             this.isPlaying = false;
             // Remove highlight
             if (sequenceItem) {
               sequenceItem.classList.remove("playing");
-              // Stop recording when recording
-              // if (isRecording) {
-              //   this.recorder.stopRecording().then((blob) => {
-              //     const url = URL.createObjectURL(blob);
-              //     const a = document.createElement("a");
-              //     a.href = url;
-              //     a.download = "animation.webm";
-              //     a.click();
-              //   });
-              // }
             }
 
-            // Re-enable play button after the animation
+            // Stop recording if recording was enabled
+            if (isRecording && this.recorder) {
+              try {
+                console.log("Stopping recording...", this.recorder);
+                this.recorder.stopRecording()
+                
+              } catch (error) {
+                console.error("Error stopping recording:", error);
+              }
+            }
+
+            // Re-enable buttons after the animation
             if (playButton) {
               playButton.disabled = false;
               playButton.innerHTML = "Play Sequence";
@@ -158,6 +179,7 @@ class AnimationController {
             // Re-enable record button after the animation
             if (recordButton) {
               recordButton.disabled = false;
+              recordButton.innerHTML = "Record Sequence";
             }
 
             // Re-enable clear button after the animation
@@ -167,11 +189,6 @@ class AnimationController {
           });
         }
 
-        // if (!isRecording) {
-        //   console.log("Recorder", this.recorder);
-        //   // Start recording the scene
-        //   this.recorder.startRecording();
-        // }
         // Play the current animation
         this.characterController.playAnimationGroup(currentAnimation);
       };
@@ -180,6 +197,15 @@ class AnimationController {
       playNextAnimation();
     } catch (error) {
       console.error(`Error loading animations for blending:`, error);
+      // Make sure to stop recording if there's an error
+      if (isRecording && this.recorder) {
+        try {
+          this.recorder.stopRecording();
+          console.log("Recording stopped due to error.");
+        } catch (stopError) {
+          console.error("Error stopping recording after error:", stopError);
+        }
+      }
       return;
     }
   }
