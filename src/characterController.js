@@ -71,6 +71,8 @@ class CharacterController {
       );
       if (loadedAnimationGroups.length > 0) {
         console.log(`Animation group already loaded: ${signName}`);
+
+        loadedAnimationGroups[0].onAnimationGroupEndObservable.clear(); 
         return loadedAnimationGroups[0];
       }
 

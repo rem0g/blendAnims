@@ -65,15 +65,12 @@ class AnimationController {
 
       // Function to play the next animation in sequence
       const playNextAnimation = () => {
-        // Remove any existing observer
-        if (this._currentAnimObserver) {
-          console.log(animationGroups, currentIndex)
-          animationGroups[
-            currentIndex
-          ]?.onAnimationGroupEndObservable?.remove(this._currentAnimObserver);
-          this._currentAnimObserver = null;
-        }
 
+        // Remove any existing observer
+        animationGroups.forEach((group) => {
+          group.onAnimationGroupEndObservable.clear();
+        });
+ 
         // Get the current animation group
         const currentAnimation = animationGroups[currentIndex];
 
@@ -105,8 +102,8 @@ class AnimationController {
 
         // Set up observer for when this animation ends
         if (currentIndex < animationGroups.length - 1) {
-          this._currentAnimObserver =
-            currentAnimation.onAnimationGroupEndObservable.add(() => {
+          currentAnimation.onAnimationGroupEndObservable.add(() => {
+              console.log("Animation ended", currentIndex);
               currentIndex++;
               // Remove highlight
               if (sequenceItem) {
@@ -116,8 +113,7 @@ class AnimationController {
             });
         } else {
           // Last animation, remove highlight when it ends
-          this._currentAnimObserver =
-            currentAnimation.onAnimationGroupEndObservable.add(() => {
+          currentAnimation.onAnimationGroupEndObservable.add(() => {
               if (sequenceItem) {
                 sequenceItem.classList.remove("playing");
                 // Stop recording when recording

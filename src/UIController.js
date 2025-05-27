@@ -1,7 +1,32 @@
 import { Grid } from "@babylonjs/gui";
+import FrameEditor from "./FrameEditor";
 
 // Class to handle UI elements and interactions, such as drag and drop
 class UIController {
+  // Show notification to user
+  showNotification(message, type = 'info') {
+    // Remove any existing notifications
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 3000);
+  }
+
   constructor(
     scene,
     availableSigns,
@@ -19,13 +44,13 @@ class UIController {
     this.controlsEnabled = false; // Flag to enable/disable controls
     this.blending = true; // Blending flag
     this.isRecording = false; // Flag to indicate if recording is active
+    this.frameEditor = new FrameEditor(animationController, this.showNotification.bind(this));
 
     // Bind methods to maintain proper 'this' context
     this.filterSignLibrary = this.filterSignLibrary.bind(this);
     this.handleDragOver = this.handleDragOver.bind(this);
     this.handleDrop = this.handleDrop.bind(this);
     this.updateSequenceUI = this.updateSequenceUI.bind(this);
-    this.setupSequenceReordering = this.setupSequenceReordering.bind(this);
     this.removeFromSequence = this.removeFromSequence.bind(this);
     this.addToSequence = this.addToSequence.bind(this);
   }
@@ -37,6 +62,12 @@ class UIController {
   }
 
   createDragDropUI() {
+    this.createMainContainer();
+    this.createHeader();
+    this.createMainLayout();
+  }
+
+  createMainContainer() {
     // Create the main container
     this.container = document.createElement("div");
     this.container.className = "ui-container";
@@ -55,7 +86,9 @@ class UIController {
       showButton.style.display = "none"; // Hide the show button
     };
     document.body.appendChild(showButton);
+  }
 
+  createHeader() {
     // Create the header with title and settings button
     const headerContainer = document.createElement("div");
     headerContainer.className = "ui-header";
@@ -70,16 +103,12 @@ class UIController {
     // Create the blending toggle button
     const blendingToggleButton = document.createElement("button");
     blendingToggleButton.className = "blending-toggle-button";
-    blendingToggleButton.innerHTML = this.blending
-      ? "Disable Blending"
-      : "Enable Blending";
+    blendingToggleButton.innerHTML = this.blending ? "Disable Blending" : "Enable Blending";
     blendingToggleButton.title = "Enable/Disable Blending";
     blendingToggleButton.onclick = () => {
       this.blending = !this.blending;
       blendingToggleButton.classList.toggle("active", this.blending);
-      blendingToggleButton.innerHTML = this.blending
-        ? "Disable Blending"
-        : "Enable Blending";
+      blendingToggleButton.innerHTML = this.blending ? "Disable Blending" : "Enable Blending";
     };
     headerContainer.appendChild(blendingToggleButton);
 
@@ -90,21 +119,22 @@ class UIController {
     closeButton.title = "Close UI";
     closeButton.onclick = () => {
       this.container.style.display = "none"; // Hide the UI
-      showButton.style.display = "block"; // Show the show button
+      document.querySelector(".show-button").style.display = "block"; // Show the show button
     };
     headerContainer.appendChild(closeButton);
+  }
 
-    // Create the blending settings panel (hidden by default)
-    this.blendingPanel = document.createElement("div");
-    this.blendingPanel.className = "blending-settings-panel";
-    this.blendingPanel.style.display = "none";
-    this.container.appendChild(this.blendingPanel);
-
+  createMainLayout() {
     // Create two-column layout
     const mainLayout = document.createElement("div");
     mainLayout.className = "main-layout";
     this.container.appendChild(mainLayout);
 
+    this.createLibraryColumn(mainLayout);
+    this.createSequenceColumn(mainLayout);
+  }
+
+  createLibraryColumn(mainLayout) {
     // ---- Left column: Sign Library ----
     const libraryColumn = document.createElement("div");
     libraryColumn.className = "library-column";
@@ -135,7 +165,9 @@ class UIController {
 
     // Populate library with available signs
     this.populateSignLibrary();
+  }
 
+  createSequenceColumn(mainLayout) {
     // ---- Right column: Sequence Builder ----
     const sequenceColumn = document.createElement("div");
     sequenceColumn.className = "sequence-column";
@@ -145,6 +177,11 @@ class UIController {
     sequenceTitle.textContent = "Sign Sequence";
     sequenceColumn.appendChild(sequenceTitle);
 
+    this.createSequenceControls(sequenceColumn);
+    this.createSequenceDropArea(sequenceColumn);
+  }
+
+  createSequenceControls(sequenceColumn) {
     // Sequence controls
     const sequenceControls = document.createElement("div");
     sequenceControls.className = "sequence-controls";
@@ -191,7 +228,9 @@ class UIController {
     sequenceControls.appendChild(recordSequenceButton);
 
     sequenceColumn.appendChild(sequenceControls);
+  }
 
+  createSequenceDropArea(sequenceColumn) {
     // Sequence drop area
     const sequenceDropArea = document.createElement("div");
     sequenceDropArea.id = "sequence-drop-area";
@@ -245,13 +284,11 @@ class UIController {
       // Make the sign item draggable
       signItem.draggable = true;
       signItem.addEventListener("dragstart", (e) => {
-        console.log("Drag start:", sign.name);
         e.dataTransfer.setData("text/plain", sign.name);
         signItem.classList.add("dragging");
       });
 
       signItem.addEventListener("dragend", () => {
-        console.log("Drag end:", sign.name);
         signItem.classList.remove("dragging");
       });
 
@@ -281,7 +318,7 @@ class UIController {
       playButton.className = "play-button";
       playButton.innerHTML = "Play";
       playButton.onclick = async (e) => {
-        e.stopPropagation(); // Prevent dragging when clicking play
+        e.stopPropagation();
         this.animationController.playSign(sign.name);
       };
       controls.appendChild(playButton);
@@ -292,7 +329,7 @@ class UIController {
       editButton.innerHTML = "⚙";
       editButton.title = `Edit frames for "${sign.name}"`;
       editButton.onclick = (e) => {
-        e.stopPropagation(); // Prevent dragging when clicking edit
+        e.stopPropagation();
         this.showFrameEditor(sign, frameInfo);
       };
       controls.appendChild(editButton);
@@ -315,32 +352,19 @@ class UIController {
       emptyMessage.textContent = "Drag signs here to create a sequence";
       sequenceContainer.appendChild(emptyMessage);
 
-      // Disable play button when sequence is empty
+      // Disable play and record buttons when sequence is empty
       const playButton = document.getElementById("play-sequence-button");
-      if (playButton) {
-        playButton.disabled = true;
-      }
-
-      // Disable Record button when sequence is empty
       const recordButton = document.getElementById("record-sequence-button");
-      if (recordButton) {
-        recordButton.disabled = true;
-      }
-
+      if (playButton) playButton.disabled = true;
+      if (recordButton) recordButton.disabled = true;
       return;
     }
 
-    // Enable play button when sequence has items
+    // Enable play and record buttons when sequence has items
     const playButton = document.getElementById("play-sequence-button");
-    if (playButton && !this.isPlaying) {
-      playButton.disabled = false;
-    }
-
-    // Enable record button when sequence has items
     const recordButton = document.getElementById("record-sequence-button");
-    if (recordButton && !this.isPlaying) {
-      recordButton.disabled = false;
-    }
+    if (playButton && !this.isPlaying) playButton.disabled = false;
+    if (recordButton && !this.isPlaying) recordButton.disabled = false;
 
     // Create sequence items
     this.sequenceItems.forEach((item, index) => {
@@ -348,37 +372,6 @@ class UIController {
       sequenceItem.className = "sequence-item";
       sequenceItem.id = `sequence-item-${item.id}`;
       sequenceItem.dataset.id = item.id;
-
-      // Add drag-to-reorder functionality
-      sequenceItem.draggable = true;
-      sequenceItem.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("application/sequence-item", item.id.toString());
-        sequenceItem.classList.add("dragging");
-        
-      });
-
-      sequenceItem.addEventListener("dragend", () => {
-        sequenceItem.classList.remove("dragging");
-      });
-
-      // Add dragover handler for reordering
-      sequenceItem.addEventListener("dragover", (e) => {
-        // e.preventDefault();
-        // const draggingItem = document.querySelector(".dragging");
-        // if (!draggingItem) return;
-
-        // const box = sequenceItem.getBoundingClientRect();
-        // const mouseY = e.clientY;
-
-        // if (mouseY < box.top + box.height / 2) {
-        //   sequenceContainer.insertBefore(draggingItem, sequenceItem);
-        // } else {
-        //   sequenceContainer.insertBefore(
-        //     draggingItem,
-        //     sequenceItem.nextSibling
-        //   );
-        // }
-      });
 
       // Sign name and info
       const signInfo = document.createElement("div");
@@ -389,11 +382,11 @@ class UIController {
       nameSpan.textContent = item.sign.name;
       signInfo.appendChild(nameSpan);
 
-      // Index number displayed in sequence block
-      const indexSpan = document.createElement("span");
-      indexSpan.className = "sequence-item-index";
-      indexSpan.textContent = `#${index + 1}`;
-      signInfo.appendChild(indexSpan);
+      // Frame range display
+      const frameSpan = document.createElement("span");
+      frameSpan.className = "sequence-item-frames";
+      frameSpan.textContent = `Frames: ${item.sign.start} - ${item.sign.end}`;
+      signInfo.appendChild(frameSpan);
 
       sequenceItem.appendChild(signInfo);
 
@@ -406,8 +399,7 @@ class UIController {
       playButton.className = "play-button small-button";
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
-      playButton.onclick = () =>
-        this.animationController.playSign(item.sign.name);
+      playButton.onclick = () => this.animationController.playSign(item.sign.name);
       controls.appendChild(playButton);
 
       const editButton = document.createElement("button");
@@ -415,7 +407,7 @@ class UIController {
       editButton.innerHTML = "⚙";
       editButton.title = `Edit frames for "${item.sign.name}"`;
       editButton.onclick = (e) => {
-        e.stopPropagation(); // Prevent dragging when clicking edit
+        e.stopPropagation();
         this.showFrameEditor(item.sign, signInfo);
       };
       controls.appendChild(editButton);
@@ -431,89 +423,12 @@ class UIController {
       sequenceItem.appendChild(controls);
       sequenceContainer.appendChild(sequenceItem);
     });
-
-    // Add drop handler to sequence container for reordering
-    // sequenceContainer.addEventListener("drop", (e) => {
-    //   console.log("Drop event triggered", e.dataTransfer);
-    //   // e.preventDefault();
-    //   const itemId = e.dataTransfer.getData("application/sequence-item");
-    //   if (itemId) {
-    //     // Reordering logic - already handled by the dragover event
-    //     this.updateSequenceOrder();
-    //   }
-    // });
-
-    // // Make the empty parts of the container accept drops too
-    // sequenceContainer.addEventListener("dragover", (e) => {
-    //   e.preventDefault();
-    //   const draggingItem = document.querySelector(".dragging");
-    //   if (!draggingItem) return;
-
-    //   // If not over another item, append to the end
-    //   const items = Array.from(
-    //     sequenceContainer.querySelectorAll(".sequence-item:not(.dragging)")
-    //   );
-    //   const mouseY = e.clientY;
-
-    //   // Find the closest item below the cursor
-    //   const closestItem = items.reduce(
-    //     (closest, child) => {
-    //       const box = child.getBoundingClientRect();
-    //       const offset = mouseY - box.top - box.height / 2;
-
-    //       if (offset < 0 && offset > closest.offset) {
-    //         return { offset, element: child };
-    //       } else {
-    //         return closest;
-    //       }
-    //     },
-    //     { offset: Number.NEGATIVE_INFINITY }
-    //   ).element;
-
-    //   if (closestItem) {
-    //     sequenceContainer.insertBefore(draggingItem, closestItem);
-    //   } else {
-    //     sequenceContainer.appendChild(draggingItem);
-    //   }
-    // });
   }
 
-  // Update the sequence data order based on the DOM order
-  updateSequenceOrder() {
-    const newOrder = [];
-    document.querySelectorAll(".sequence-item").forEach((item) => {
-      const id = parseInt(item.dataset.id);
-      const sequenceItem = this.sequenceItems.find((i) => i.id === id);
-      if (sequenceItem) {
-        newOrder.push(sequenceItem);
-      }
-    });
-
-    this.sequenceItems = newOrder;
-  }
-
-  // Setup the logic for reordering sequence items via drag and drop
-  setupSequenceReordering() {
-    const sequenceContainer = document.getElementById("sequence-container");
-
-    // Add drop handler to update the internal array order
-    sequenceContainer.addEventListener("drop", (e) => {
-      e.preventDefault();
-      this.updateSequenceOrder();
-    });
-  }
-
-  // Remove an item from the sequence
-  removeFromSequence(itemId) {
-    this.sequenceItems = this.sequenceItems.filter(
-      (item) => item.id !== itemId
-    );
-    this.updateSequenceUI();
-  }
-
-  // Handle drag over
+  // Handle drag over the sequence area
   handleDragOver(e) {
     e.preventDefault();
+    // Show a visual cue for the drop
     e.dataTransfer.dropEffect = "copy";
   }
 
@@ -521,24 +436,13 @@ class UIController {
   handleDrop(e) {
     e.preventDefault();
 
-    // Check if this is a reordering operation
-    const sequenceItemId = e.dataTransfer.getData("application/sequence-item");
-    if (sequenceItemId) {
-      // Reordering is handled by the updateSequenceOrder method
-      this.updateSequenceOrder();
-      return;
-    }
-
-    // Otherwise, this is adding a new sign from the library
+    // Get the sign name from the dragged item
     const signName = e.dataTransfer.getData("text/plain");
-    console.log("Drop sign name:", signName);
     if (!signName) return;
 
     const sign = this.availableSigns.find((s) => s.name === signName);
-    console.log("Found sign:", sign);
     if (!sign) return;
 
-    // Add to sequence
     this.addToSequence(sign);
   }
 
@@ -557,253 +461,18 @@ class UIController {
     this.updateSequenceUI();
   }
 
-    // Show notification to user
-  showNotification(message, type = 'info') {
-    // Remove any existing notifications
-    const existingNotification = document.querySelector('.notification');
-    if (existingNotification) {
-      existingNotification.remove();
-    }
-
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    // Add to body
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 3000);
-  }
-
-   // Show frame editor modal for a specific sign
+  // Show frame editor modal for a specific sign
   showFrameEditor(sign, frameInfoElement) {
-    // Create modal overlay
-    const modal = document.createElement("div");
-    modal.className = "frame-editor-modal";
-    modal.innerHTML = `
-      <div class="frame-editor-content">
-        <div class="frame-editor-header">
-          <h3>Edit Frame Timing - ${sign.name}</h3>
-          <button class="frame-editor-close">×</button>
-        </div>
-        <div class="frame-editor-body">
-          <div class="frame-control">
-            <label for="start-frame">Start Frame: <span id="start-value">${sign.start}</span></label>
-            <input type="range" id="start-frame" value="${sign.start}" min="0" max="200" step="1" class="frame-slider">
-          </div>
-          <div class="frame-control">
-            <label for="end-frame">End Frame: <span id="end-value">${sign.end}</span></label>
-            <input type="range" id="end-frame" value="${sign.end}" min="1" max="250" step="1" class="frame-slider">
-          </div>
-          <div class="frame-preview">
-            <p>Original: ${sign.start} - ${sign.end} (${sign.end - sign.start} frames)</p>
-            <div class="frame-preview-live">
-              <p id="frame-preview-text">Preview: ${sign.start} - ${sign.end} (${sign.end - sign.start} frames)</p>
-            </div>
-          </div>
-          <div class="frame-editor-actions">
-            <button class="test-button">🎬 Test Animation</button>
-            <button class="save-button">💾 Save Changes</button>
-            <button class="cancel-button">Cancel</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    // Get elements
-    const startInput = modal.querySelector("#start-frame");
-    const endInput = modal.querySelector("#end-frame");
-    const startValueSpan = modal.querySelector("#start-value");
-    const endValueSpan = modal.querySelector("#end-value");
-    const previewText = modal.querySelector("#frame-preview-text");
-    const closeButton = modal.querySelector(".frame-editor-close");
-    const testButton = modal.querySelector(".test-button");
-    const saveButton = modal.querySelector(".save-button");
-    const cancelButton = modal.querySelector(".cancel-button");
-
-    // Update preview when sliders change
-    const updatePreview = () => {
-      const start = parseInt(startInput.value) || 0;
-      const end = parseInt(endInput.value) || 1;
-      const duration = Math.max(0, end - start);
-      
-      // Update value displays
-      startValueSpan.textContent = start;
-      endValueSpan.textContent = end;
-      previewText.textContent = `Preview: ${start} - ${end} (${duration} frames)`;
-
-      // Check for slider range
-      
-      // Validate inputs
-      if (start >= end) {
-        previewText.style.color = '#F44336';
-        saveButton.disabled = true;
-        testButton.disabled = true;
-      } else {
-        previewText.style.color = '#333';
-        saveButton.disabled = false;
-        testButton.disabled = false;
-      }
-    };
-
-    // Real-time updates as user drags sliders
-    startInput.addEventListener("input", updatePreview);
-    endInput.addEventListener("input", updatePreview);
-
-    // Auto-test animation when user stops sliding (debounced)
-    let autoTestTimeout;
-    const autoTestAnimation = () => {
-      const newStart = parseInt(startInput.value) || 0;
-      const newEnd = parseInt(endInput.value) || 1;
-      
-      if (newStart >= newEnd) return;
-
-      // Clear any existing timeout
-      clearTimeout(autoTestTimeout);
-      
-      // Set a new timeout to test after user stops sliding for 800ms
-      autoTestTimeout = setTimeout(async () => {
-        // Temporarily update the sign data for testing
-        const originalStart = sign.start;
-        const originalEnd = sign.end;
-        
-        sign.start = newStart;
-        sign.end = newEnd;
-        
-        // Clear the cached animation for this sign to force reload
-        this.clearCachedAnimation(sign.name);
-        
-        try {
-          await this.animationController.playSign(sign.name);
-        } catch (error) {
-          console.error('Error auto-testing animation:', error);
-        }
-        
-        // Restore original values after test
-        sign.start = originalStart;
-        sign.end = originalEnd;
-        
-        // Clear the test animation to avoid confusion
-        this.clearCachedAnimation(sign.name);
-      }, 800); // Wait 800ms after user stops sliding
-    };
-
-    startInput.addEventListener("input", autoTestAnimation);
-    endInput.addEventListener("input", autoTestAnimation);
-
-    // Close modal function
-    const closeModal = () => {
-      // Clear any pending auto-test timeout
-      if (autoTestTimeout) {
-        clearTimeout(autoTestTimeout);
-      }
-      document.body.removeChild(modal);
-    };
-
-    // Event handlers
-    closeButton.onclick = closeModal;
-    cancelButton.onclick = closeModal;
-    
-    // Click outside to close
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        closeModal();
-      }
-    };
-
-    // Test animation with new frame values
-    testButton.onclick = async () => {
-      const newStart = parseInt(startInput.value) || 0;
-      const newEnd = parseInt(endInput.value) || 1;
-      
-      if (newStart >= newEnd) return;
-
-      // Show loading state
-      testButton.disabled = true;
-      testButton.innerHTML = "🎬 Testing...";
-
-      // Temporarily update the sign data for testing
-      const originalStart = sign.start;
-      const originalEnd = sign.end;
-      
-      sign.start = newStart;
-      sign.end = newEnd;
-      
-      try {
-        await this.animationController.playSign(sign.name);
-      } catch (error) {
-        console.error('Error testing animation:', error);
-        this.showNotification('⚠️ Error testing animation', 'error');
-      }
-      
-      // Restore original values after test
-      sign.start = originalStart;
-      sign.end = originalEnd;
-      
-      // Clear the test animation to avoid confusion
-      this.clearCachedAnimation(sign.name);
-      
-      // Restore button state
-      testButton.disabled = false;
-      testButton.innerHTML = "🎬 Test Animation";
-    };
-
-    // Save changes
-    saveButton.onclick = async () => {
-      const newStart = parseInt(startInput.value) || 0;
-      const newEnd = parseInt(endInput.value) || 1;
-      
-      if (newStart >= newEnd) {
-        this.showNotification('End frame must be greater than start frame!', 'error');
-        return;
-      }
-
-      // Show loading state
-      saveButton.disabled = true;
-      saveButton.innerHTML = "💾 Saving...";
-
-      try {
-        // Clear the cached animation for this sign before updating
-        this.clearCachedAnimation(sign.name);
-
-        // Update the sign data
-        sign.start = newStart;
-        sign.end = newEnd;
-        
-        // Update the global signs map to keep everything in sync
-        this.updateSignInMap(sign.name, newStart, newEnd);
-        
-        // Update the frame info display
-        frameInfoElement.textContent = `Frames: ${sign.start} - ${sign.end}`;
-        
-        // Save to JSON file without reloading the page
-        await this.saveSignsToFile();
-        
-        closeModal();
-      } catch (error) {
-        console.error('Error saving changes:', error);
-        this.showNotification('Error saving changes', 'error');
-        
-        // Restore button state
-        saveButton.disabled = false;
-        saveButton.innerHTML = "💾 Save Changes";
-      }
-    };
-
-    // Focus on the modal (for keyboard accessibility)
-    modal.focus();
+    this.frameEditor.show(sign, frameInfoElement);
   }
 
-
-
+  // Remove an item from the sequence
+  removeFromSequence(itemId) {
+    this.sequenceItems = this.sequenceItems.filter(
+      (item) => item.id !== itemId
+    );
+    this.updateSequenceUI();
+  }
 }
 
 export default UIController;
