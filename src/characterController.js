@@ -6,11 +6,10 @@ import {
   ImportAnimationsAsync,
   Animation,
   RuntimeAnimation,
+  BoneLookController,
 } from "babylonjs";
 import { availableSigns, availableSignsMap } from "./availableSigns.js";
 import EyeBlinkController from "./eyeBlinkController.js";
-
-
 
 // Class to load and control the character
 class CharacterController {
@@ -46,6 +45,39 @@ class CharacterController {
     // const eyeBlinkController = new EyeBlinkController(loadedResults);
     // eyeBlinkController.createEyeBlinkAnimation(this.scene);
 
+    const leftEyeBone = loadedResults.skeletons[0].bones.find(
+      (bone) => bone.name === "LeftEye"
+    );
+
+    const rightEyeBone = loadedResults.skeletons[0].bones.find(
+      (bone) => bone.name === "RightEye"
+    );
+    if (!leftEyeBone || !rightEyeBone) {
+      console.error("Left or Right Eye bone not found in the skeleton");
+    }
+
+    const lookCtrLeft = new BoneLookController(
+      loadedResults,
+      leftEyeBone,
+      this.cameraController.camera.position
+    );
+
+    const lookCtrRight = new BoneLookController(
+      loadedResults,
+      rightEyeBone,
+      this.cameraController.camera.position
+    );
+
+    // todo, FIX THIS!
+    // // Set the look controllers to update every frame
+    // this.scene.onBeforeRenderObservable.add(() => {
+    //   if (lookCtrLeft && lookCtrRight) {
+    //     lookCtrLeft.update();
+    //     lookCtrRight.update();
+    //   }
+    // });
+  
+
     // Always select the character mesh as active mesh
     loadedResults.meshes.forEach((mesh) => {
       mesh.alwaysSelectAsActiveMesh = true;
@@ -72,7 +104,7 @@ class CharacterController {
       if (loadedAnimationGroups.length > 0) {
         console.log(`Animation group already loaded: ${signName}`);
 
-        loadedAnimationGroups[0].onAnimationGroupEndObservable.clear(); 
+        loadedAnimationGroups[0].onAnimationGroupEndObservable.clear();
         return loadedAnimationGroups[0];
       }
 
@@ -95,7 +127,10 @@ class CharacterController {
       const endFrame = availableSignsMap[signName].end;
 
       // Non-destructive trim of the animation
-      myAnimation.normalize(availableSignsMap[signName].start, availableSignsMap[signName].end);
+      myAnimation.normalize(
+        availableSignsMap[signName].start,
+        availableSignsMap[signName].end
+      );
 
       // TODO: make this dynamic, so it can be changed in the UI
       // Hard trim of the animation
@@ -107,32 +142,45 @@ class CharacterController {
       // Remove the animation from the hips
       // console.log("Animation group before removing hips:", myAnimation);
       // myAnimation.targetedAnimations[0].animation.keys = [];
-      myAnimation.targetedAnimations.forEach(targetedAnim => {
-          if (targetedAnim.target !== null && targetedAnim.animation !== null) {
-              // Remove the hips animation
-              if (targetedAnim.target.name === "Hips") {
-                  if (targetedAnim.animation.targetProperty === "rotationQuaternion") {
-                      targetedAnim.animation._keys.forEach(key => {
-                          key.value.x = 0;
-                          key.value.y = 0;
-                          key.value.z = 0;
-                      });
-                  } else if (targetedAnim.animation.targetProperty === "position") {
-                      targetedAnim.animation._keys.forEach(key => {
-                          key.value.x = 0;
-                          key.value.y = 0;
-                          key.value.z = 1;
-                      });
-
-                    }
-              }
+      myAnimation.targetedAnimations.forEach((targetedAnim) => {
+        console.log(
+          "Targeted Animation:",
+          targetedAnim.target.name,
+          targetedAnim.animation.name
+        );
+        if (targetedAnim.target !== null && targetedAnim.animation !== null) {
+          // Remove the hips animation
+          if (targetedAnim.target.name === "Hips") {
+            if (
+              targetedAnim.animation.targetProperty === "rotationQuaternion"
+            ) {
+              targetedAnim.animation._keys.forEach((key) => {
+                key.value.x = 0;
+                key.value.y = 0;
+                key.value.z = 0;
+              });
+            } else if (targetedAnim.animation.targetProperty === "position") {
+              targetedAnim.animation._keys.forEach((key) => {
+                key.value.x = 0;
+                key.value.y = 0;
+                key.value.z = 1;
+              });
+            }
+          } else if (targetedAnim.target.name === "morphTarget57") {
+            // Remove the morph target animation
+            targetedAnim.animation._keys = [];
+          } else if (targetedAnim.target.name === "morphTarget58") {
+            // Remove the morph target animation
+            targetedAnim.animation._keys = [];
           }
-      });        
-      
+        }
+      });
+
       // Rename the animationgroup to the signName
       myAnimation.name = signName;
 
       // Blendshape van ogen uitzetten
+      // console.log("Disabling eye blendshapes f/or animation:", targetedAnim.animation);
       // ogen zetten op camera
 
       return myAnimation;
@@ -184,9 +232,11 @@ class CharacterController {
           this.scene.animationGroups.length > 0
         ) {
           console.log(
-            `Found ${this.scene.animationGroups.length} animation groups: ${this.scene.animationGroups.map(
-              (group) => group.name
-            ).join(", ")}`
+            `Found ${
+              this.scene.animationGroups.length
+            } animation groups: ${this.scene.animationGroups
+              .map((group) => group.name)
+              .join(", ")}`
           );
 
           // Stop any currently playing animation
@@ -198,8 +248,9 @@ class CharacterController {
           }
 
           // Get the latest animation group (which should be the one we just loaded)
-          const animationGroup =
-            this.scene.animationGroups.find((group) => group.name === signName);
+          const animationGroup = this.scene.animationGroups.find(
+            (group) => group.name === signName
+          );
           this.currentAnimationGroup = animationGroup;
 
           // Set up position
