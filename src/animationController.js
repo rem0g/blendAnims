@@ -1,4 +1,3 @@
-
 // Class to contol the animations of the avatar
 class AnimationController {
   constructor(scene, characterController, isPlaying, recorder) {
@@ -57,6 +56,18 @@ class AnimationController {
       playButton.innerHTML = "Playing...";
     }
 
+    // Disable record button during playback
+    const recordButton = document.getElementById("record-sequence-button");
+    if (recordButton) {
+      recordButton.disabled = true;
+    }
+
+    // Disable clear button during playback
+    const clearButton = document.getElementById("clear-sequence-button");
+    if (clearButton) {
+      clearButton.disabled = true;
+    }
+
     this.isPlaying = true;
 
     try {
@@ -73,12 +84,11 @@ class AnimationController {
 
       // Function to play the next animation in sequence
       const playNextAnimation = () => {
-
         // Remove any existing observer
         animationGroups.forEach((group) => {
           group.onAnimationGroupEndObservable.clear();
         });
- 
+
         // Get the current animation group
         const currentAnimation = animationGroups[currentIndex];
 
@@ -112,31 +122,49 @@ class AnimationController {
         // Set up observer for when this animation ends
         if (currentIndex < animationGroups.length - 1) {
           currentAnimation.onAnimationGroupEndObservable.add(() => {
-              console.log("Animation ended", currentIndex);
-              currentIndex++;
-              // Remove highlight
-              if (sequenceItem) {
-                sequenceItem.classList.remove("playing");
-              }
-              playNextAnimation();
-            });
+            console.log("Animation ended", currentIndex);
+            currentIndex++;
+            // Remove highlight
+            if (sequenceItem) {
+              sequenceItem.classList.remove("playing");
+            }
+            playNextAnimation();
+          });
         } else {
-          // Last animation, remove highlight when it ends
+          // Last animation
           currentAnimation.onAnimationGroupEndObservable.add(() => {
-              if (sequenceItem) {
-                sequenceItem.classList.remove("playing");
-                // Stop recording when recording
-                // if (isRecording) {
-                //   this.recorder.stopRecording().then((blob) => {
-                //     const url = URL.createObjectURL(blob);
-                //     const a = document.createElement("a");
-                //     a.href = url;
-                //     a.download = "animation.webm";
-                //     a.click();
-                //   });
-                // }
-              }
-            });
+            this.isPlaying = false;
+            // Remove highlight
+            if (sequenceItem) {
+              sequenceItem.classList.remove("playing");
+              // Stop recording when recording
+              // if (isRecording) {
+              //   this.recorder.stopRecording().then((blob) => {
+              //     const url = URL.createObjectURL(blob);
+              //     const a = document.createElement("a");
+              //     a.href = url;
+              //     a.download = "animation.webm";
+              //     a.click();
+              //   });
+              // }
+            }
+
+            // Re-enable play button after the animation
+            if (playButton) {
+              playButton.disabled = false;
+              playButton.innerHTML = "Play Sequence";
+            }
+
+            // Re-enable record button after the animation
+            if (recordButton) {
+              recordButton.disabled = false;
+            }
+
+            // Re-enable clear button after the animation
+            if (clearButton) {
+              clearButton.disabled = false;
+            }
+          });
         }
 
         // if (!isRecording) {
@@ -153,14 +181,6 @@ class AnimationController {
     } catch (error) {
       console.error(`Error loading animations for blending:`, error);
       return;
-    } finally {
-      this.isPlaying = false;
-
-      // Re-enable play button after the animation
-      if (playButton) {
-        playButton.disabled = false;
-        playButton.innerHTML = "Play Sequence";
-      }
     }
   }
 }

@@ -330,6 +330,14 @@ h2 {
   background-color: #D32F2F;
 }
 
+.record-sequence-button {
+  background-color: #4CAF50;
+}
+
+.record-sequence-button:hover {
+  background-color: #45a049;
+}
+
 .remove-button {
   background-color: #F44336;
 }

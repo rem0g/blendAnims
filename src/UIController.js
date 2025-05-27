@@ -193,6 +193,7 @@ class UIController {
     playSequenceButton.disabled = true;
     playSequenceButton.onclick = () => {
       this.isRecording = false;
+
       // Blend animation for the sequence
       this.animationController.playSequence(
         this.sequenceItems.map((item) => item.sign.name),
@@ -203,8 +204,10 @@ class UIController {
     sequenceControls.appendChild(playSequenceButton);
 
     const clearSequenceButton = document.createElement("button");
+    clearSequenceButton.id = "clear-sequence-button";
     clearSequenceButton.className = "control-button clear-sequence-button";
     clearSequenceButton.innerHTML = "Clear All";
+    clearSequenceButton.disabled = true;
     clearSequenceButton.onclick = () => {
       this.sequenceItems = [];
       this.updateSequenceUI();
@@ -352,19 +355,19 @@ class UIController {
       emptyMessage.textContent = "Drag signs here to create a sequence";
       sequenceContainer.appendChild(emptyMessage);
 
-      // Disable play and record buttons when sequence is empty
-      const playButton = document.getElementById("play-sequence-button");
-      const recordButton = document.getElementById("record-sequence-button");
-      if (playButton) playButton.disabled = true;
-      if (recordButton) recordButton.disabled = true;
+      // Disable control buttons when sequence is empty
+      const controlButtons = document.querySelectorAll(".control-button");
+      controlButtons.forEach((button) => {
+        button.disabled = true;
+      });
       return;
     }
 
     // Enable play and record buttons when sequence has items
-    const playButton = document.getElementById("play-sequence-button");
-    const recordButton = document.getElementById("record-sequence-button");
-    if (playButton && !this.isPlaying) playButton.disabled = false;
-    if (recordButton && !this.isPlaying) recordButton.disabled = false;
+    const controlButtons = document.querySelectorAll(".control-button");
+    controlButtons.forEach((button) => {
+      button.disabled = false;
+    });
 
     // Create sequence items
     this.sequenceItems.forEach((item, index) => {
