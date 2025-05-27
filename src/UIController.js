@@ -319,7 +319,7 @@ class UIController {
       playButton.innerHTML = "Play";
       playButton.onclick = async (e) => {
         e.stopPropagation();
-        this.animationController.playSign(sign.name);
+        this.animationController.playSign(sign.name, signItem);
       };
       controls.appendChild(playButton);
 
@@ -370,7 +370,7 @@ class UIController {
     this.sequenceItems.forEach((item, index) => {
       const sequenceItem = document.createElement("div");
       sequenceItem.className = "sequence-item";
-      sequenceItem.id = `sequence-item-${item.id}`;
+      sequenceItem.id = `sequence-item-${index + 1}`;
       sequenceItem.dataset.id = item.id;
 
       // Sign name and info
@@ -399,7 +399,7 @@ class UIController {
       playButton.className = "play-button small-button";
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
-      playButton.onclick = () => this.animationController.playSign(item.sign.name);
+      playButton.onclick = () => this.animationController.playSign(item.sign.name, sequenceItem);
       controls.appendChild(playButton);
 
       const editButton = document.createElement("button");

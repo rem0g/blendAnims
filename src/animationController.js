@@ -15,16 +15,24 @@ class AnimationController {
   }
 
   // Play a single sign animation
-  async playSign(signName) {
+  async playSign(signName, signItem) {
     console.log(`Playing sign: ${signName}`);
 
     if (this.characterController) {
       try {
         // Load and queue the animation
         await this.characterController.loadAnimation(signName);
+
+        if (signItem) {
+          signItem.classList.add("playing");
+        }
         await this.characterController.playAnimation(signName);
       } catch (error) {
         console.error(`Error loading animation for ${signName}:`, error);
+      } finally {
+        if (signItem) {
+          signItem.classList.remove("playing");
+        }
       }
     } else {
       console.warn("Character controller not available for animation");
@@ -96,6 +104,7 @@ class AnimationController {
         const sequenceItem = document.getElementById(
           `sequence-item-${currentIndex + 1}`
         );
+        console.log("Sequence item", sequenceItem);
         if (sequenceItem) {
           sequenceItem.classList.add("playing");
         }

@@ -175,7 +175,7 @@ class CharacterController {
   }
 
   // Play a single animation (depricated)
-  async playAnimation() {
+  async playAnimation(signName) {
     return new Promise((resolve, reject) => {
       try {
         // Play the animation
@@ -199,7 +199,7 @@ class CharacterController {
 
           // Get the latest animation group (which should be the one we just loaded)
           const animationGroup =
-            this.scene.animationGroups[this.scene.animationGroups.length - 1];
+            this.scene.animationGroups.find((group) => group.name === signName);
           this.currentAnimationGroup = animationGroup;
 
           // Set up position
