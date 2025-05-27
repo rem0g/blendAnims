@@ -7,7 +7,6 @@ class CameraController {
     this.scene = scene;
     this.canvas = canvas;
 
-    console.log("Creating new camera");
     this.camera = new ArcRotateCamera(
       "camera1",
       -Math.PI / 2,
@@ -27,6 +26,8 @@ class CameraController {
     
     // Scroll speed
     this.camera.wheelPrecision = 100;
+
+    console.log("Camera initialized:", this.camera);
   }
 
   getPosition() {
@@ -34,7 +35,6 @@ class CameraController {
   }
 
   setPosition(x, y, z) {
-    console.log("Setting camera position to: ", x, y, z);
     this.camera.position.x = x;
     this.camera.position.y = y;
     this.camera.position.z = z;

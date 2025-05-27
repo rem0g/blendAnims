@@ -42,8 +42,6 @@ class CharacterController {
       this.scene
     );
 
-    console.log("Character mesh loaded:", loadedResults);
-
     // Eye blinking does not work yet
     // const eyeBlinkController = new EyeBlinkController(loadedResults);
     // eyeBlinkController.createEyeBlinkAnimation(this.scene);
@@ -109,18 +107,14 @@ class CharacterController {
       // myAnimation.targetedAnimations[0].animation.keys = [];
       myAnimation.targetedAnimations.forEach(targetedAnim => {
           if (targetedAnim.target !== null && targetedAnim.animation !== null) {
-              // targetedAnim.animation.setEasingFunction(easingFunction);
-
+              // Remove the hips animation
               if (targetedAnim.target.name === "Hips") {
-                console.log("Removing hips animation:", targetedAnim);
                   if (targetedAnim.animation.targetProperty === "rotationQuaternion") {
                       targetedAnim.animation._keys.forEach(key => {
                           key.value.x = 0;
                           key.value.y = 0;
                           key.value.z = 0;
                       });
-
-                      console.log("Hips rotation disabled.");
                   } else if (targetedAnim.animation.targetProperty === "position") {
                       targetedAnim.animation._keys.forEach(key => {
                           key.value.x = 0;
@@ -128,8 +122,7 @@ class CharacterController {
                           key.value.z = 1;
                       });
 
-                      console.log("Hips position disabled.");
-                  }
+                    }
               }
           }
       });        
@@ -189,10 +182,11 @@ class CharacterController {
           this.scene.animationGroups.length > 0
         ) {
           console.log(
-            `Found ${this.scene.animationGroups.length} animation groups`
+            `Found ${this.scene.animationGroups.length} animation groups: ${this.scene.animationGroups.map(
+              (group) => group.name
+            ).join(", ")}`
           );
 
-          console.log("Current animation group", this.currentAnimationGroup);
           // Stop any currently playing animation
           if (this.currentAnimationGroup) {
             this.currentAnimationGroup.stop();

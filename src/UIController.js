@@ -245,11 +245,13 @@ class UIController {
       // Make the sign item draggable
       signItem.draggable = true;
       signItem.addEventListener("dragstart", (e) => {
+        console.log("Drag start:", sign.name);
         e.dataTransfer.setData("text/plain", sign.name);
         signItem.classList.add("dragging");
       });
 
       signItem.addEventListener("dragend", () => {
+        console.log("Drag end:", sign.name);
         signItem.classList.remove("dragging");
       });
 
@@ -280,7 +282,6 @@ class UIController {
       playButton.innerHTML = "Play";
       playButton.onclick = async (e) => {
         e.stopPropagation(); // Prevent dragging when clicking play
-        console.log(`Playing sign: ${sign.name}`);
         this.animationController.playSign(sign.name);
       };
       controls.appendChild(playButton);
@@ -353,6 +354,7 @@ class UIController {
       sequenceItem.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("application/sequence-item", item.id.toString());
         sequenceItem.classList.add("dragging");
+        
       });
 
       sequenceItem.addEventListener("dragend", () => {
@@ -361,21 +363,21 @@ class UIController {
 
       // Add dragover handler for reordering
       sequenceItem.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        const draggingItem = document.querySelector(".dragging");
-        if (!draggingItem) return;
+        // e.preventDefault();
+        // const draggingItem = document.querySelector(".dragging");
+        // if (!draggingItem) return;
 
-        const box = sequenceItem.getBoundingClientRect();
-        const mouseY = e.clientY;
+        // const box = sequenceItem.getBoundingClientRect();
+        // const mouseY = e.clientY;
 
-        if (mouseY < box.top + box.height / 2) {
-          sequenceContainer.insertBefore(draggingItem, sequenceItem);
-        } else {
-          sequenceContainer.insertBefore(
-            draggingItem,
-            sequenceItem.nextSibling
-          );
-        }
+        // if (mouseY < box.top + box.height / 2) {
+        //   sequenceContainer.insertBefore(draggingItem, sequenceItem);
+        // } else {
+        //   sequenceContainer.insertBefore(
+        //     draggingItem,
+        //     sequenceItem.nextSibling
+        //   );
+        // }
       });
 
       // Sign name and info
@@ -431,48 +433,49 @@ class UIController {
     });
 
     // Add drop handler to sequence container for reordering
-    sequenceContainer.addEventListener("drop", (e) => {
-      e.preventDefault();
-      const itemId = e.dataTransfer.getData("application/sequence-item");
-      if (itemId) {
-        // Reordering logic - already handled by the dragover event
-        this.updateSequenceOrder();
-      }
-    });
+    // sequenceContainer.addEventListener("drop", (e) => {
+    //   console.log("Drop event triggered", e.dataTransfer);
+    //   // e.preventDefault();
+    //   const itemId = e.dataTransfer.getData("application/sequence-item");
+    //   if (itemId) {
+    //     // Reordering logic - already handled by the dragover event
+    //     this.updateSequenceOrder();
+    //   }
+    // });
 
-    // Make the empty parts of the container accept drops too
-    sequenceContainer.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      const draggingItem = document.querySelector(".dragging");
-      if (!draggingItem) return;
+    // // Make the empty parts of the container accept drops too
+    // sequenceContainer.addEventListener("dragover", (e) => {
+    //   e.preventDefault();
+    //   const draggingItem = document.querySelector(".dragging");
+    //   if (!draggingItem) return;
 
-      // If not over another item, append to the end
-      const items = Array.from(
-        sequenceContainer.querySelectorAll(".sequence-item:not(.dragging)")
-      );
-      const mouseY = e.clientY;
+    //   // If not over another item, append to the end
+    //   const items = Array.from(
+    //     sequenceContainer.querySelectorAll(".sequence-item:not(.dragging)")
+    //   );
+    //   const mouseY = e.clientY;
 
-      // Find the closest item below the cursor
-      const closestItem = items.reduce(
-        (closest, child) => {
-          const box = child.getBoundingClientRect();
-          const offset = mouseY - box.top - box.height / 2;
+    //   // Find the closest item below the cursor
+    //   const closestItem = items.reduce(
+    //     (closest, child) => {
+    //       const box = child.getBoundingClientRect();
+    //       const offset = mouseY - box.top - box.height / 2;
 
-          if (offset < 0 && offset > closest.offset) {
-            return { offset, element: child };
-          } else {
-            return closest;
-          }
-        },
-        { offset: Number.NEGATIVE_INFINITY }
-      ).element;
+    //       if (offset < 0 && offset > closest.offset) {
+    //         return { offset, element: child };
+    //       } else {
+    //         return closest;
+    //       }
+    //     },
+    //     { offset: Number.NEGATIVE_INFINITY }
+    //   ).element;
 
-      if (closestItem) {
-        sequenceContainer.insertBefore(draggingItem, closestItem);
-      } else {
-        sequenceContainer.appendChild(draggingItem);
-      }
-    });
+    //   if (closestItem) {
+    //     sequenceContainer.insertBefore(draggingItem, closestItem);
+    //   } else {
+    //     sequenceContainer.appendChild(draggingItem);
+    //   }
+    // });
   }
 
   // Update the sequence data order based on the DOM order
@@ -528,9 +531,11 @@ class UIController {
 
     // Otherwise, this is adding a new sign from the library
     const signName = e.dataTransfer.getData("text/plain");
+    console.log("Drop sign name:", signName);
     if (!signName) return;
 
     const sign = this.availableSigns.find((s) => s.name === signName);
+    console.log("Found sign:", sign);
     if (!sign) return;
 
     // Add to sequence
@@ -550,6 +555,30 @@ class UIController {
 
     // Update the UI
     this.updateSequenceUI();
+  }
+
+    // Show notification to user
+  showNotification(message, type = 'info') {
+    // Remove any existing notifications
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 3000);
   }
 
    // Show frame editor modal for a specific sign
@@ -610,6 +639,8 @@ class UIController {
       startValueSpan.textContent = start;
       endValueSpan.textContent = end;
       previewText.textContent = `Preview: ${start} - ${end} (${duration} frames)`;
+
+      // Check for slider range
       
       // Validate inputs
       if (start >= end) {

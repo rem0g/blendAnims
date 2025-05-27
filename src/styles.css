@@ -568,6 +568,48 @@ h2 {
   cursor: not-allowed;
 }
 
+/* === Notifications === */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  z-index: 2000;
+  animation: slideIn 0.3s ease-out;
+  max-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.notification-success {
+  background-color: #4CAF50;
+}
+
+.notification-warning {
+  background-color: #FF9800;
+}
+
+.notification-error {
+  background-color: #F44336;
+}
+
+.notification-info {
+  background-color: #2196F3;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 /* === Responsive Design === */
 @media (min-width: 1024px) {
   .main-layout {

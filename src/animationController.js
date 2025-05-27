@@ -7,8 +7,6 @@ class AnimationController {
     this.isPlaying = isPlaying;
     this.transitionDuration = 0.5; // Duration for blending animations hardcoded for now
     this.recorder = recorder;
-
-    console.log("this.recorder", this.recorder);
   }
 
   // Initialize the AnimationController
@@ -74,12 +72,6 @@ class AnimationController {
             currentIndex
           ]?.onAnimationGroupEndObservable?.remove(this._currentAnimObserver);
           this._currentAnimObserver = null;
-        }
-
-        // If we've played all animations, we're done
-        if (currentIndex >= animationGroups.length) {
-          console.log("Finished playing all animations in sequence");
-          return;
         }
 
         // Get the current animation group

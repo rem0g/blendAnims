@@ -32,10 +32,12 @@ half
 
 Losse woorden:
 Trein
+Intercity
+Sprinter
 Perron
 Vertraagd
 Vertrekt van
+Van
 Naar
 Beste reizigers
-Intercity
-Sprinter
+
