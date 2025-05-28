@@ -12,6 +12,10 @@ export const availableSigns = [
     { name: "VRAGEN-A", file: "signs/VRAGEN-A_250226_1.glb", start: 65, end: 100 },
     { name: "WACHTEN-B", file: "signs/WACHTEN-B_250226_1.glb", start: 30, end: 103 },
     {name: "lelystad", file: "signs/LELYSTAD_250314_1_GlassesGuyRecord_C_1.glb", start:55, end: 130 },
+    {name: "2", file: "signs/mabel/2.glb", start: 0, end: 200 },
+    {name: "3", file: "signs/mabel/3.glb", start: 0, end: 200 },
+    {name: "4", file: "signs/mabel/4.glb", start: 0, end: 200 },
+    {name: "Zin_250528_75.glb", file: "signs/mabel/Zin_250528_75.glb", start: 0, end: 500 },
   ];
 
 

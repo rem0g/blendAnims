@@ -19,6 +19,7 @@ class CharacterController {
     this.isPlaying = isPlaying;
     this.animationGroup = null;
     this.currentAnimationGroup = null;
+    this.morphTargetManagers = [];
   }
 
   async init() {
@@ -76,19 +77,24 @@ class CharacterController {
     //     lookCtrRight.update();
     //   }
     // });
-  
 
     // Always select the character mesh as active mesh
     loadedResults.meshes.forEach((mesh) => {
       mesh.alwaysSelectAsActiveMesh = true;
+
+      if (mesh.morphTargetManager) {
+        this.morphTargetManagers.push(mesh.morphTargetManager);
+      }
     });
+
+    console.log("Morph target managers:", this.morphTargetManagers);
 
     return loadedResults;
   }
 
   // Load a single animation
   async loadAnimation(signName) {
-    try {
+    // try {
       // Get the sign file from the availableSigns array
       const sign = availableSigns.find((sign) => sign.name === signName);
 
@@ -126,6 +132,10 @@ class CharacterController {
       const startFrame = availableSignsMap[signName].start;
       const endFrame = availableSignsMap[signName].end;
 
+      myAnimation = this.retargetAnimWithBlendshapes(this.character, myAnimation);
+
+      console.log("myAnimation:", myAnimation);
+
       // Non-destructive trim of the animation
       myAnimation.normalize(
         availableSignsMap[signName].start,
@@ -142,12 +152,11 @@ class CharacterController {
       // Remove the animation from the hips
       // console.log("Animation group before removing hips:", myAnimation);
       // myAnimation.targetedAnimations[0].animation.keys = [];
+
+      // var curMTM = 0;
+
       myAnimation.targetedAnimations.forEach((targetedAnim) => {
-        console.log(
-          "Targeted Animation:",
-          targetedAnim.target.name,
-          targetedAnim.animation.name
-        );
+        console.log("Targeted Animation:", targetedAnim);
         if (targetedAnim.target !== null && targetedAnim.animation !== null) {
           // Remove the hips animation
           if (targetedAnim.target.name === "Hips") {
@@ -167,12 +176,41 @@ class CharacterController {
               });
             }
           } else if (targetedAnim.target.name === "morphTarget57") {
+            // console.log("morphTarget57", targetedAnim.animation._keys);
             // Remove the morph target animation
-            targetedAnim.animation._keys = [];
+            // targetedAnim.animation._keys = [{}];
           } else if (targetedAnim.target.name === "morphTarget58") {
             // Remove the morph target animation
-            targetedAnim.animation._keys = [];
+            // targetedAnim.animation._keys = [];
           }
+
+          // // Check if the targeted animation is a morph target
+          // if (targetedAnim.target.name.startsWith("morphTarget")) {
+          //   const manager = this.morphTargetManagers[curMTM];
+          //   const index = this.getMorphTargetIndex(manager, targetedAnim.target.name);
+
+          //   console.log("Found morph target at index:", targetedAnim.target.name, index);
+          //   manager.dispose(manager.getTarget(index));
+          //   manager.addTarget(targetedAnim.target);
+          //   curMTM++;
+
+          //   console.log("curMTM:", curMTM);
+
+          //   if (curMTM >= this.morphTargetManagers.length) {
+          //     curMTM = 0; // Reset to the first morph target manager if we exceed the count
+          //   }
+
+          //   console.log(
+          //     `Added morph target: ${targetedAnim.target.name} at index ${index}`
+          //   );
+          // if (morphTargetIndex !== -1) {
+
+          // } else {
+          //   console.warn(
+          //     `Morph target not found: ${targetedAnim.target.name}`
+          //   );
+          // }
+          // }
         }
       });
 
@@ -184,10 +222,97 @@ class CharacterController {
       // ogen zetten op camera
 
       return myAnimation;
-    } catch (error) {
-      console.error("Error in loadAnimation:", error.message);
-      return null;
+    // } 
+    // catch (error) {
+    //   console.error("Error in loadAnimation:", error.message);
+    //   return null;
+    // }
+  }
+
+  /*
+    Function: retargetAnimWithBlendshapes
+
+    Description:
+    This function takes a target mesh and an animation group and retargets the animation group
+    to the target mesh. Most importantly, it will also retarget the animation group to the blendshapes
+    which babylon does not do by default.
+
+    Parameters:
+    - targetMeshAsset: The mesh to retarget the animation to.
+    - animGroup: The animation group to retarget.
+    - cloneName: The name of the cloned animation group.
+
+    Returns:
+    Void, but the animation group will be retargeted to the target mesh.
+    And we are able to play this animation group on the target mesh through the scene object.
+*/
+  retargetAnimWithBlendshapes(targetMeshAsset, animGroup, cloneName = "anim") {
+    console.log("Retargeting animation to target mesh...");
+
+    var morphName = null;
+    var curMTM = 0;
+    var morphIndex = 0;
+    var mtm;
+
+    return animGroup.clone(cloneName, (target) => {
+      if (!target) {
+        console.log("No target.");
+        return null;
+      }
+
+
+      // First set all bone targets to the linkedTransformNode
+      let idx = targetMeshAsset.skeletons[0].getBoneIndexByName(target.name);
+      var targetBone = targetMeshAsset.skeletons[0].bones[idx];
+      if (targetBone) {
+        return targetBone._linkedTransformNode;
+      }
+
+      // Iterate over morphManagers if we don't have a new morph target
+      // Otherwise reset the index
+      if (morphName !== target.name) {
+        curMTM = 0;
+        morphName = target.name;
+      }
+
+      // If we don't have bones anymore, we can assume we are in the morph target section
+      morphIndex = this.getMorphTargetIndex(
+        this.morphTargetManagers[curMTM],
+        target.name
+      );
+
+      // Sometimes a mesh has extra bits of clothing like glasses, which are not part of the morph targets.
+      // Because we don't know the order of the morph targets, we need to copy these values to the previous one.
+      if (morphIndex === -1) {
+        if (!mtm) {
+          return null;
+        } else {
+          return mtm;
+        }
+      }
+
+      mtm = this.morphTargetManagers[curMTM].getTarget(morphIndex);
+      curMTM++;
+
+      return mtm;
+    });
+  }
+
+  // Helper function to get the morph target index, since babylon only provides
+  // morph targets through the index. Which follow GLTF standards but is not useful for us.
+  getMorphTargetIndex(morphTargetManager, targetName) {
+    if (!morphTargetManager) {
+      console.error("Morph target manager not found.");
+      return -1;
     }
+
+    for (var i = 0; i < morphTargetManager.numTargets; i++) {
+      if (morphTargetManager.getTarget(i).name === targetName) {
+        return i;
+      }
+    }
+
+    return -1;
   }
 
   // Delete the keyframes outside the start and end frames from the animationgroup

@@ -86,6 +86,8 @@ class AnimationController {
       }
       this.recorder = recorder;
 
+      // Add startup frames
+
       // Try to start recording
       if (this.recorder) {
         console.log("Starting recording...");
