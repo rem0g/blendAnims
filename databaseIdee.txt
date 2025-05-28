@@ -18,6 +18,9 @@ Perronen + getallen voor tijd:
 10
 11
 12
+13
+14
+15
 A
 B
 
@@ -35,9 +38,24 @@ Trein
 Intercity
 Sprinter
 Perron
+Spoor
 Vertraagd
 Vertrekt van
+Vertrekt om
 Van
 Naar
 Beste reizigers
+
+Zinnen:
+Beste reizigers, de Intercity naar Amsterdam van kwart voor 10 vertrekt van perron 14A.
+Beste reizigers, de trein van 5 voor half 6 naar Diemen is vertraagd.
+Beste reizigers, de Sprinter naar Haarlem van 10 voor 3 vertrekt van spoor 2.
+Beste reizigers, de trein van kwart over 4 vertrekt van perron 3.
+Beste reizigers, de Intercity naar Groningen van half 2 is vertraagd.
+Beste reizigers, de Sprinter naar Den Haag van kwart voor 7 vertrekt om 7 uur.
+Beste reizigers, de trein naar Den Haag vertrekt om 10 over 1.
+Beste reizigers, de Intercity van 5 over 8 vertrekt van spoor 15A.
+Beste reizigers, de Sprinter naar Amsterdam van 5 over half 9 is vertraagd.
+Beste reizigers, de trein naar Diemen van half 11 vertrekt om 11 uur.
+
 
