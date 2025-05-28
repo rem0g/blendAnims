@@ -32,6 +32,7 @@ half
 10 over 
 5 voor 
 10 voor
+minuten
 
 Losse woorden:
 Trein
@@ -40,8 +41,11 @@ Sprinter
 Perron
 Spoor
 Vertraagd
+vertrekt
 Vertrekt van
 Vertrekt om
+vertrekt over
+over
 Van
 Naar
 Beste reizigers
