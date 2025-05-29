@@ -1,7 +1,12 @@
+import { availableSigns, availableSignsMap } from "./availableSigns.js";
 class FrameEditor {
-  constructor(animationController, showNotification) {
+  constructor(animationController, showNotification, updateLibraryUI, updateSequenceUI) {
     this.animationController = animationController;
     this.showNotification = showNotification;
+    this.UIcontroller = {
+      updateLibraryUI: updateLibraryUI,
+      updateSequenceUI: updateSequenceUI
+    };
   }
 
   show(sign, frameInfoElement) {
@@ -14,6 +19,15 @@ class FrameEditor {
 
   // Create the frame editor modal structure
   createFrameEditorModal(sign) {
+    // Find the sign in the available signs map
+    console.log("Sign name map", availableSignsMap[sign.name]);
+
+    console.log("Available signs map updated:", availableSignsMap);
+
+    const frameStart = availableSignsMap[sign.name]?.start || 0;
+    const frameEnd = availableSignsMap[sign.name]?.end || 600;
+
+    console.log("Sign to edit:", sign);
     const modal = document.createElement("div");
     modal.className = "frame-editor-modal";
     modal.innerHTML = `
@@ -24,17 +38,17 @@ class FrameEditor {
         </div>
         <div class="frame-editor-body">
           <div class="frame-control">
-            <label for="start-frame">Start Frame: <span id="start-value">${sign.start}</span></label>
-            <input type="range" id="start-frame" value="${sign.start}" min="0" max="200" step="1" class="frame-slider">
+            <label for="start-frame">Start Frame: <span id="start-value">${frameStart}</span></label>
+            <input type="range" id="start-frame" value="${frameStart}" min="0" max="200" step="1" class="frame-slider">
           </div>
           <div class="frame-control">
-            <label for="end-frame">End Frame: <span id="end-value">${sign.end}</span></label>
-            <input type="range" id="end-frame" value="${sign.end}" min="1" max="250" step="1" class="frame-slider">
+            <label for="end-frame">End Frame: <span id="end-value">${frameEnd}</span></label>
+            <input type="range" id="end-frame" value="${frameEnd}" min="1" max="250" step="1" class="frame-slider">
           </div>
           <div class="frame-preview">
-            <p>Original: ${sign.start} - ${sign.end} (${sign.end - sign.start} frames)</p>
+            <p>Original: ${frameStart} - ${frameEnd} (${frameEnd - frameStart} frames)</p>
             <div class="frame-preview-live">
-              <p id="frame-preview-text">Preview: ${sign.start} - ${sign.end} (${sign.end - sign.start} frames)</p>
+              <p id="frame-preview-text">Preview: ${frameStart} - ${frameEnd} (${frameEnd - frameStart} frames)</p>
             </div>
           </div>
           <div class="frame-editor-actions">
@@ -77,10 +91,19 @@ class FrameEditor {
       elements.endValueSpan.textContent = end;
       elements.previewText.textContent = `Preview: ${start} - ${end} (${duration} frames)`;
 
+      availableSignsMap[sign.name] = {
+        ...availableSignsMap[sign.name],
+        start: start,
+        end: end
+      };
+
       const isValid = start < end;
       elements.previewText.style.color = isValid ? '#333' : '#F44336';
       elements.saveButton.disabled = !isValid;
       elements.testButton.disabled = !isValid;
+
+      this.UIcontroller.updateLibraryUI();
+      this.UIcontroller.updateSequenceUI();
     };
 
     const autoTestAnimation = () => {
@@ -97,7 +120,7 @@ class FrameEditor {
         sign.start = newStart;
         sign.end = newEnd;
         
-        this.animationController.clearCachedAnimation(sign.name);
+        // this.animationController.clearCachedAnimation(sign.name);
         
         try {
           await this.animationController.playSign(sign.name);
@@ -107,7 +130,7 @@ class FrameEditor {
         
         sign.start = originalStart;
         sign.end = originalEnd;
-        this.animationController.clearCachedAnimation(sign.name);
+        // this.animationController.clearCachedAnimation(sign.name);
       }, 800);
     };
 
@@ -142,7 +165,7 @@ class FrameEditor {
       
       sign.start = originalStart;
       sign.end = originalEnd;
-      this.animationController.clearCachedAnimation(sign.name);
+      // this.animationController.clearCachedAnimation(sign.name);
       
       elements.testButton.disabled = false;
       elements.testButton.innerHTML = "🎬 Test Animation";
@@ -153,6 +176,7 @@ class FrameEditor {
       const newEnd = parseInt(elements.endInput.value) || 1;
       
       if (newStart >= newEnd) {
+        console.error('End frame must be greater than start frame!');
         this.showNotification('End frame must be greater than start frame!', 'error');
         return;
       }
@@ -161,12 +185,13 @@ class FrameEditor {
       elements.saveButton.innerHTML = "💾 Saving...";
 
       try {
-        this.animationController.clearCachedAnimation(sign.name);
+        // this.animationController.clearCachedAnimation(sign.name);
         sign.start = newStart;
         sign.end = newEnd;
-        this.animationController.updateSignInMap(sign.name, newStart, newEnd);
-        frameInfoElement.textContent = `Frames: ${sign.start} - ${sign.end}`;
-        await this.animationController.saveSignsToFile();
+        // this.animationController.updateSignInMap(sign.name, newStart, newEnd);
+        // frameInfoElement.textContent = `Frames: ${sign.start} - ${sign.end}`;
+        // await this.animationController.saveSignsToFile();
+        console.log("Available signs map after save:", availableSignsMap);
         closeModal();
       } catch (error) {
         console.error('Error saving changes:', error);

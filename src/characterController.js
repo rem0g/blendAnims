@@ -398,6 +398,12 @@ class CharacterController {
             this.isPlaying = false;
             resolve();
           });
+          
+          // Normalize the animation group to the start and end frames
+          animationGroup.normalize(
+            availableSignsMap[signName].start,
+            availableSignsMap[signName].end
+          );
 
           // Start the animation (not looping)
           animationGroup.start(false);

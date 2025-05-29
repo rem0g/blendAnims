@@ -1,32 +1,9 @@
 import { Grid } from "@babylonjs/gui";
-import FrameEditor from "./FrameEditor";
+import FrameEditor from "./frameEditor";
+import { availableSignsMap } from "./availableSigns";
 
 // Class to handle UI elements and interactions, such as drag and drop
 class UIController {
-  // Show notification to user
-  showNotification(message, type = "info") {
-    // Remove any existing notifications
-    const existingNotification = document.querySelector(".notification");
-    if (existingNotification) {
-      existingNotification.remove();
-    }
-
-    // Create notification element
-    const notification = document.createElement("div");
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-
-    // Add to body
-    document.body.appendChild(notification);
-
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 3000);
-  }
-
   constructor(
     scene,
     availableSigns,
@@ -46,7 +23,9 @@ class UIController {
     this.isRecording = false; // Flag to indicate if recording is active
     this.frameEditor = new FrameEditor(
       animationController,
-      this.showNotification.bind(this)
+      this.showNotification.bind(this),
+      this.updateLibraryFrames.bind(this),
+      this.updateSequenceUI.bind(this)
     );
 
     // Bind methods to maintain proper 'this' context
@@ -335,8 +314,9 @@ class UIController {
 
       // Frame info display
       const frameInfo = document.createElement("span");
+      frameInfo.id = `frame-info-${sign.name}`;
       frameInfo.className = "sign-description";
-      frameInfo.textContent = `Frames: ${sign.start} - ${sign.end}`;
+      frameInfo.textContent = `Frames: ${availableSignsMap[sign.name].start} - ${availableSignsMap[sign.name].end}`;
       signInfo.appendChild(frameInfo);
 
       signItem.appendChild(signInfo);
@@ -371,6 +351,20 @@ class UIController {
       // Add to library
       library.appendChild(signItem);
     });
+  }
+
+  updateLibraryFrames() {
+    console.log("Updating library frames...", availableSignsMap);
+    const signItems = document.querySelectorAll(".sign-item");
+    signItems.forEach((item) => {
+      const signName = item.dataset.name;
+      const frameInfo = document.getElementById(`frame-info-${signName}`);
+      if (frameInfo) {
+        frameInfo.textContent = `Frames: ${availableSignsMap[signName].start} - ${availableSignsMap[signName].end}`;
+      }
+    });
+
+    console.log("Library frames updated.", availableSignsMap);
   }
 
   // Update the sequence UI
@@ -418,7 +412,7 @@ class UIController {
       const frameSpan = document.createElement("span");
       frameSpan.className = "sequence-item-frames";
 
-      frameSpan.textContent = `Frames: ${item.sign.start} - ${item.sign.end}`;
+      frameSpan.textContent = `Frames: ${availableSignsMap[item.sign.name].start} - ${availableSignsMap[item.sign.name].end}`;
       signInfo.appendChild(frameSpan);
 
       sequenceItem.appendChild(signInfo);
@@ -442,6 +436,7 @@ class UIController {
       editButton.title = `Edit frames for "${item.sign.name}"`;
       editButton.onclick = (e) => {
         e.stopPropagation();
+        console.log("Editing sign:", item);
         this.showFrameEditor(item.sign, signInfo);
       };
       controls.appendChild(editButton);
@@ -498,6 +493,7 @@ class UIController {
   // Show frame editor modal for a specific sign
   showFrameEditor(sign, frameInfoElement) {
     this.frameEditor.show(sign, frameInfoElement);
+
   }
 
   // Remove an item from the sequence
@@ -506,6 +502,30 @@ class UIController {
       (item) => item.id !== itemId
     );
     this.updateSequenceUI();
+  }
+
+    // Show notification to user
+  showNotification(message, type = "info") {
+    // Remove any existing notifications
+    const existingNotification = document.querySelector(".notification");
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+
+    // Create notification element
+    const notification = document.createElement("div");
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+
+    // Add to body
+    document.body.appendChild(notification);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 3000);
   }
 }
 
