@@ -16,23 +16,43 @@ class FrameEditor {
     this.scene = scene;
   }
 
-  show(sign, frameInfoElement) {
-    const modal = this.createFrameEditorModal(sign);
+  show(sign, frameInfoElement, animationGroup, sequenceItem = null) {
+    // Stop all currently playing animations
+    this.scene.animationGroups.forEach(group => {
+      group.stop();
+      console.log(`Stopped animation: ${group.name}`);
+    });
+    
+    // Reset the animation controller's playing state
+    if (this.animationController) {
+      this.animationController.isPlaying = false;
+    }
+    
+    const modal = this.createFrameEditorModal(sign, animationGroup, sequenceItem);
     document.body.appendChild(modal);
 
     const elements = this.getFrameEditorElements(modal);
-    this.setupFrameEditorEventListeners(elements, sign, frameInfoElement);
+    this.setupFrameEditorEventListeners(elements, sign, frameInfoElement, animationGroup, sequenceItem);
   }
 
   // Create the frame editor modal structure
-  createFrameEditorModal(sign) {
+  createFrameEditorModal(sign, animationGroup, sequenceItem = null) {
     // Find the sign in the available signs map
     console.log("Sign name map", availableSignsMap[sign.name]);
 
     console.log("Available signs map updated:", availableSignsMap);
 
-    const frameStart = availableSignsMap[sign.name]?.start || 0;
-    const frameEnd = availableSignsMap[sign.name]?.end || 600;
+    // Use sequence item's frame range if editing from sequence, otherwise use global
+    const frameStart = sequenceItem ? sequenceItem.frameRange.start : (availableSignsMap[sign.name]?.start || 0);
+    
+    // Get the actual animation end frame from the animation group
+    let maxFrames = 250; // Default fallback
+    if (animationGroup && animationGroup.to) {
+      maxFrames = Math.ceil(animationGroup.to);
+      console.log(`Animation ${sign.name} has ${maxFrames} frames total`);
+    }
+    
+    const frameEnd = sequenceItem ? sequenceItem.frameRange.end : (availableSignsMap[sign.name]?.end || maxFrames);
 
     console.log("Sign to edit:", sign);
     const modal = document.createElement("div");
@@ -46,16 +66,17 @@ class FrameEditor {
         <div class="frame-editor-body">
           <div class="frame-control">
             <label for="start-frame">Start Frame: <span id="start-value">${frameStart}</span></label>
-            <input type="range" id="start-frame" value="${frameStart}" min="0" max="200" step="1" class="frame-slider">
+            <input type="range" id="start-frame" value="${frameStart}" min="0" max="${maxFrames - 1}" step="1" class="frame-slider">
           </div>
           <div class="frame-control">
             <label for="end-frame">End Frame: <span id="end-value">${frameEnd}</span></label>
-            <input type="range" id="end-frame" value="${frameEnd}" min="1" max="250" step="1" class="frame-slider">
+            <input type="range" id="end-frame" value="${frameEnd}" min="1" max="${maxFrames}" step="1" class="frame-slider">
           </div>
           <div class="frame-preview">
             <p>Original: ${frameStart} - ${frameEnd} (${
       frameEnd - frameStart
     } frames)</p>
+            <p style="font-size: 0.9em; color: #666;">Total available frames: ${maxFrames}</p>
             <div class="frame-preview-live">
               <p id="frame-preview-text">Preview: ${frameStart} - ${frameEnd} (${
       frameEnd - frameStart
@@ -90,7 +111,7 @@ class FrameEditor {
   }
 
   // Setup all event listeners for the frame editor
-  setupFrameEditorEventListeners(elements, sign, frameInfoElement) {
+  setupFrameEditorEventListeners(elements, sign, frameInfoElement, animationGroup, sequenceItem = null) {
     let autoTestTimeout;
 
     const updatePreview = (slider) => {
@@ -102,29 +123,46 @@ class FrameEditor {
       elements.endValueSpan.textContent = end;
       elements.previewText.textContent = `Preview: ${start} - ${end} (${duration} frames)`;
 
-      availableSignsMap[sign.name] = {
-        ...availableSignsMap[sign.name],
-        start: start,
-        end: end,
-      };
+      // If editing from sequence, update the sequence item's frame range
+      if (sequenceItem) {
+        sequenceItem.frameRange.start = start;
+        sequenceItem.frameRange.end = end;
+        sequenceItem.sign.start = start;
+        sequenceItem.sign.end = end;
+      } else {
+        // Otherwise update the global availableSignsMap
+        availableSignsMap[sign.name] = {
+          ...availableSignsMap[sign.name],
+          start: start,
+          end: end,
+        };
+      }
 
-      // // This does not work yet, use auto test animation for now
-      // const animationGroup = this.scene.animationGroups.find(
-      //   (group) => group.name === sign.name
-      // );
-      // if (animationGroup) {
-      //   console.log("Found animation group:", animationGroup);
+      // Preview the frame when adjusting sliders
+      if (animationGroup) {
+        // Normalize the animation to the new frame range
+        animationGroup.normalize(start, end);
+        
+        // If not playing, start it first to make goToFrame work
+        if (!animationGroup.isPlaying) {
+          animationGroup.start(false);
+        }
+        
+        // Make sure it's paused
+        animationGroup.pause();
+        
+        // Go to the appropriate frame based on which slider is being adjusted
+        if (slider === "start") {
+          console.log("Going to start frame:", start);
+          animationGroup.goToFrame(start);
+        } else if (slider === "end") {
+          console.log("Going to end frame:", end);
+          animationGroup.goToFrame(end);
+        }
 
-      //   if (slider === "start") {
-      //     console.log("Goining to start frame:", start);
-      //     animationGroup.goToFrame(start);
-      //   } else if (slider === "end") {
-      //     console.log("Goining to end frame:", end);
-      //     animationGroup.goToFrame(end);
-      //   }
-
-      //   this.scene.render(); // Force one render pass after jumping to the frame
-      // }
+        // Force a render to show the frame
+        this.scene.render();
+      }
 
       const isValid = start < end;
       elements.previewText.style.color = isValid ? "#333" : "#F44336";
@@ -166,6 +204,10 @@ class FrameEditor {
     const closeModal = () => {
       if (autoTestTimeout) {
         clearTimeout(autoTestTimeout);
+      }
+      // Stop the animation when closing the modal
+      if (animationGroup) {
+        animationGroup.stop();
       }
       document.body.removeChild(elements.modal);
     };
@@ -217,12 +259,28 @@ class FrameEditor {
       elements.saveButton.innerHTML = "💾 Saving...";
 
       try {
-        // this.animationController.clearCachedAnimation(sign.name);
-        sign.start = newStart;
-        sign.end = newEnd;
-        // this.animationController.updateSignInMap(sign.name, newStart, newEnd);
-        // frameInfoElement.textContent = `Frames: ${sign.start} - ${sign.end}`;
-        // await this.animationController.saveSignsToFile();
+        // If editing from sequence, update only the sequence item
+        if (sequenceItem) {
+          sequenceItem.frameRange.start = newStart;
+          sequenceItem.frameRange.end = newEnd;
+          sequenceItem.sign.start = newStart;
+          sequenceItem.sign.end = newEnd;
+          frameInfoElement.textContent = `Frames: ${newStart} - ${newEnd}`;
+        } else {
+          // Otherwise update the sign and global map
+          sign.start = newStart;
+          sign.end = newEnd;
+          availableSignsMap[sign.name] = {
+            ...availableSignsMap[sign.name],
+            start: newStart,
+            end: newEnd,
+          };
+          // Update all frame info displays in the library
+          const frameInfo = document.getElementById(`frame-info-${sign.name}`);
+          if (frameInfo) {
+            frameInfo.textContent = `Frames: ${newStart} - ${newEnd}`;
+          }
+        }
         console.log("Available signs map after save:", availableSignsMap);
         closeModal();
       } catch (error) {
@@ -252,6 +310,24 @@ class FrameEditor {
     elements.testButton.onclick = handleTestAnimation;
     elements.saveButton.onclick = handleSaveChanges;
 
+    // Initial setup: start the animation and immediately pause it at the start frame
+    if (animationGroup) {
+      const currentStart = parseInt(elements.startInput.value) || 0;
+      const currentEnd = parseInt(elements.endInput.value) || animationGroup.to;
+      
+      // Normalize the animation to the current frame range
+      animationGroup.normalize(currentStart, currentEnd);
+      
+      // Start the animation to make goToFrame work properly
+      animationGroup.start(false);
+      animationGroup.pause();
+      animationGroup.goToFrame(currentStart);
+      
+      // Force a render to show the frame
+      this.scene.render();
+      console.log(`Animation ${animationGroup.name} set to frame ${currentStart}`);
+    }
+    
     // Initial preview update
     updatePreview();
     elements.modal.focus();

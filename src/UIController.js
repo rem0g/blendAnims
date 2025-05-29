@@ -181,6 +181,9 @@ class UIController {
     playSequenceButton.onclick = () => {
       this.isRecording = false;
 
+      // Pass the sequence items to the animation controller
+      this.animationController.sequenceItems = this.sequenceItems;
+      
       // Blend animation for the sequence
       this.animationController.playSequence(
         this.sequenceItems.map((item) => item.sign.name),
@@ -209,6 +212,10 @@ class UIController {
     recordSequenceButton.onclick = () => {
       this.isRecording = true;
       recordSequenceButton.classList.toggle("active", this.isRecording);
+      
+      // Pass the sequence items to the animation controller
+      this.animationController.sequenceItems = this.sequenceItems;
+      
       this.animationController.playSequence(
         this.sequenceItems.map((item) => item.sign.name),
         this.blending,
@@ -341,10 +348,10 @@ class UIController {
       editButton.className = "edit-button";
       editButton.innerHTML = "⚙";
       editButton.title = `Edit frames for "${sign.name}"`;
-      editButton.onclick = (e) => {
+      editButton.onclick = async (e) => {
         e.stopPropagation();
-        this.characterController.loadAnimation(sign.name);
-        this.showFrameEditor(sign, frameInfo);
+        const animationGroup = await this.characterController.loadAnimation(sign.name);
+        this.showFrameEditor(sign, frameInfo, animationGroup);
       };
       controls.appendChild(editButton);
 
@@ -404,14 +411,16 @@ class UIController {
 
       const nameSpan = document.createElement("span");
       nameSpan.className = "sequence-item-name";
-      nameSpan.textContent = item.sign.name;
+      nameSpan.textContent = item.sign.takeNumber > 1 ? `${item.sign.name} (Take ${item.sign.takeNumber})` : item.sign.name;
       signInfo.appendChild(nameSpan);
 
       // Frame range display
       const frameSpan = document.createElement("span");
       frameSpan.className = "sequence-item-frames";
+      frameSpan.id = `sequence-frame-info-${item.id}`;
 
-      frameSpan.textContent = `Frames: ${availableSignsMap[item.sign.name].start} - ${availableSignsMap[item.sign.name].end}`;
+      // Use the item's own frame range instead of the global one
+      frameSpan.textContent = `Frames: ${item.frameRange.start} - ${item.frameRange.end}`;
       signInfo.appendChild(frameSpan);
 
       sequenceItem.appendChild(signInfo);
@@ -425,20 +434,26 @@ class UIController {
       playButton.className = "play-button small-button";
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
-      playButton.onclick = () =>
+      playButton.onclick = async () => {
+        // For sequence items, apply their specific frame range
+        const animationGroup = await this.characterController.loadAnimation(item.sign.name);
+        if (animationGroup && item.frameRange) {
+          animationGroup.normalize(item.frameRange.start, item.frameRange.end);
+        }
         this.animationController.playSign(item.sign.name, sequenceItem);
+      };
       controls.appendChild(playButton);
 
       const editButton = document.createElement("button");
       editButton.className = "edit-button small-button";
       editButton.innerHTML = "⚙";
       editButton.title = `Edit frames for "${item.sign.name}"`;
-      editButton.onclick = (e) => {
+      editButton.onclick = async (e) => {
         e.stopPropagation();
         console.log("Editing sign:", item);
-        // 
-        this.characterController.loadAnimation(item.sign.name);
-        this.showFrameEditor(item.sign, signInfo);
+        // Load animation to get actual frame count
+        const animationGroup = await this.characterController.loadAnimation(item.sign.name);
+        this.showFrameEditor(item.sign, frameSpan, animationGroup, item);
       };
       controls.appendChild(editButton);
 
@@ -480,11 +495,29 @@ class UIController {
   addToSequence(sign) {
     // Generate a unique ID for this sequence item
     const itemId = this.nextItemId++;
+    
+    // Create a deep clone of the sign to avoid modifying the original
+    const clonedSign = { ...sign };
+    
+    // Copy the frame values from availableSignsMap
+    const frameData = availableSignsMap[sign.name];
+    clonedSign.start = frameData.start;
+    clonedSign.end = frameData.end;
+    
+    // Count how many times this sign appears in the sequence already
+    const takeNumber = this.sequenceItems.filter(item => item.sign.name === sign.name).length + 1;
+    
+    // Add take number to the cloned sign
+    clonedSign.takeNumber = takeNumber;
 
-    // Add to our sequence data
+    // Add to our sequence data with its own frame range
     this.sequenceItems.push({
       id: itemId,
-      sign: sign,
+      sign: clonedSign,
+      frameRange: {
+        start: clonedSign.start,
+        end: clonedSign.end
+      }
     });
 
     // Update the UI
@@ -492,9 +525,8 @@ class UIController {
   }
 
   // Show frame editor modal for a specific sign
-  showFrameEditor(sign, frameInfoElement) {
-    this.frameEditor.show(sign, frameInfoElement);
-
+  showFrameEditor(sign, frameInfoElement, animationGroup, sequenceItem = null) {
+    this.frameEditor.show(sign, frameInfoElement, animationGroup, sequenceItem);
   }
 
   // Remove an item from the sequence

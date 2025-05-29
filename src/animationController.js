@@ -39,6 +39,8 @@ class AnimationController {
   }
 
   async playSequence(signNames, blending = false, isRecording) {
+    // Get the sequence items to access their individual frame ranges
+    const sequenceItems = this.sequenceItems;
     if (!this.characterController) {
       console.warn("Character controller not available for blending");
       return;
@@ -116,8 +118,14 @@ class AnimationController {
           group.onAnimationGroupEndObservable.clear();
         });
 
-        // Get the current animation group
+        // Get the current animation group and sequence item
         const currentAnimation = animationGroups[currentIndex];
+        const currentSequenceItem = sequenceItems[currentIndex];
+
+        // Apply the sequence item's frame range if available
+        if (currentSequenceItem && currentSequenceItem.frameRange) {
+          currentAnimation.normalize(currentSequenceItem.frameRange.start, currentSequenceItem.frameRange.end);
+        }
 
         if (blending) {
           // this.scene.animationPropertiesOverride =

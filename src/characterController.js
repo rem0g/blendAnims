@@ -93,7 +93,7 @@ class CharacterController {
   }
 
   // Load a single animation
-  async loadAnimation(signName) {
+  async loadAnimation(signName, shouldClone = false) {
     try {
       // Get the sign file from the availableSigns array
       const sign = availableSigns.find((sign) => sign.name === signName);
@@ -103,15 +103,24 @@ class CharacterController {
         return null;
       }
 
-      // Check if the sign file is not already loaded, to prevent duplicates
-      const loadedAnimationGroups = this.scene.animationGroups.filter(
+      // Check if animation already exists
+      const existingGroup = this.scene.animationGroups.find(
         (group) => group.name === signName
       );
-      if (loadedAnimationGroups.length > 0) {
-        console.log(`Animation group already loaded: ${signName}`);
-
-        loadedAnimationGroups[0].onAnimationGroupEndObservable.clear();
-        return loadedAnimationGroups[0];
+      
+      if (existingGroup) {
+        if (shouldClone) {
+          console.log(`Cloning existing animation: ${signName}`);
+          // Clone the animation with a unique name including timestamp
+          const clonedGroup = existingGroup.clone(`${signName}_${Date.now()}`);
+          clonedGroup.name = signName; // Keep original name for reference
+          clonedGroup.onAnimationGroupEndObservable.clear();
+          return clonedGroup;
+        } else {
+          console.log(`Animation group already loaded: ${signName}`);
+          existingGroup.onAnimationGroupEndObservable.clear();
+          return existingGroup;
+        }
       }
 
       const signFile = sign.file;
@@ -263,8 +272,11 @@ class CharacterController {
     let curMTM = 0;
     let morphIndex = 0;
     let mtm;
+    
+    // Generate a unique clone name with timestamp to avoid conflicts
+    const uniqueCloneName = `${cloneName}_${Date.now()}`;
 
-    return animGroup.clone(cloneName, (target) => {
+    return animGroup.clone(uniqueCloneName, (target) => {
       if (!target) {
         console.log("No target.");
         return null;
@@ -348,7 +360,8 @@ class CharacterController {
     const animationResult = [];
 
     for (const signName of signNames) {
-      const result = await this.loadAnimation(signName);
+      // Clone animations when loading for sequence playback
+      const result = await this.loadAnimation(signName, true);
       animationResult.push(result);
       console.log("Loaded:", signName);
     }
