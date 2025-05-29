@@ -22,6 +22,7 @@ class UIController {
     this.blending = true; // Blending flag
     this.isRecording = false; // Flag to indicate if recording is active
     this.frameEditor = new FrameEditor(
+      this.scene,
       animationController,
       this.showNotification.bind(this),
       this.updateLibraryFrames.bind(this),
@@ -342,6 +343,7 @@ class UIController {
       editButton.title = `Edit frames for "${sign.name}"`;
       editButton.onclick = (e) => {
         e.stopPropagation();
+        this.characterController.loadAnimation(sign.name);
         this.showFrameEditor(sign, frameInfo);
       };
       controls.appendChild(editButton);
@@ -354,7 +356,6 @@ class UIController {
   }
 
   updateLibraryFrames() {
-    console.log("Updating library frames...", availableSignsMap);
     const signItems = document.querySelectorAll(".sign-item");
     signItems.forEach((item) => {
       const signName = item.dataset.name;
@@ -363,8 +364,6 @@ class UIController {
         frameInfo.textContent = `Frames: ${availableSignsMap[signName].start} - ${availableSignsMap[signName].end}`;
       }
     });
-
-    console.log("Library frames updated.", availableSignsMap);
   }
 
   // Update the sequence UI
@@ -437,6 +436,8 @@ class UIController {
       editButton.onclick = (e) => {
         e.stopPropagation();
         console.log("Editing sign:", item);
+        // 
+        this.characterController.loadAnimation(item.sign.name);
         this.showFrameEditor(item.sign, signInfo);
       };
       controls.appendChild(editButton);

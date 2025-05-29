@@ -381,7 +381,7 @@ class CharacterController {
             );
           }
 
-          // Get the latest animation group (which should be the one we just loaded)
+          // Get the correct animation group by name
           const animationGroup = this.scene.animationGroups.find(
             (group) => group.name === signName
           );
@@ -398,7 +398,7 @@ class CharacterController {
             this.isPlaying = false;
             resolve();
           });
-          
+
           // Normalize the animation group to the start and end frames
           animationGroup.normalize(
             availableSignsMap[signName].start,

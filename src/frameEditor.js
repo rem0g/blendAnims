@@ -1,12 +1,19 @@
 import { availableSigns, availableSignsMap } from "./availableSigns.js";
 class FrameEditor {
-  constructor(animationController, showNotification, updateLibraryUI, updateSequenceUI) {
+  constructor(
+    scene,
+    animationController,
+    showNotification,
+    updateLibraryUI,
+    updateSequenceUI
+  ) {
     this.animationController = animationController;
     this.showNotification = showNotification;
     this.UIcontroller = {
       updateLibraryUI: updateLibraryUI,
-      updateSequenceUI: updateSequenceUI
+      updateSequenceUI: updateSequenceUI,
     };
+    this.scene = scene;
   }
 
   show(sign, frameInfoElement) {
@@ -46,9 +53,13 @@ class FrameEditor {
             <input type="range" id="end-frame" value="${frameEnd}" min="1" max="250" step="1" class="frame-slider">
           </div>
           <div class="frame-preview">
-            <p>Original: ${frameStart} - ${frameEnd} (${frameEnd - frameStart} frames)</p>
+            <p>Original: ${frameStart} - ${frameEnd} (${
+      frameEnd - frameStart
+    } frames)</p>
             <div class="frame-preview-live">
-              <p id="frame-preview-text">Preview: ${frameStart} - ${frameEnd} (${frameEnd - frameStart} frames)</p>
+              <p id="frame-preview-text">Preview: ${frameStart} - ${frameEnd} (${
+      frameEnd - frameStart
+    } frames)</p>
             </div>
           </div>
           <div class="frame-editor-actions">
@@ -74,7 +85,7 @@ class FrameEditor {
       testButton: modal.querySelector(".test-button"),
       saveButton: modal.querySelector(".save-button"),
       cancelButton: modal.querySelector(".cancel-button"),
-      modal: modal
+      modal: modal,
     };
   }
 
@@ -82,11 +93,11 @@ class FrameEditor {
   setupFrameEditorEventListeners(elements, sign, frameInfoElement) {
     let autoTestTimeout;
 
-    const updatePreview = () => {
+    const updatePreview = (slider) => {
       const start = parseInt(elements.startInput.value) || 0;
       const end = parseInt(elements.endInput.value) || 1;
       const duration = Math.max(0, end - start);
-      
+
       elements.startValueSpan.textContent = start;
       elements.endValueSpan.textContent = end;
       elements.previewText.textContent = `Preview: ${start} - ${end} (${duration} frames)`;
@@ -94,11 +105,29 @@ class FrameEditor {
       availableSignsMap[sign.name] = {
         ...availableSignsMap[sign.name],
         start: start,
-        end: end
+        end: end,
       };
 
+      // // This does not work yet, use auto test animation for now
+      // const animationGroup = this.scene.animationGroups.find(
+      //   (group) => group.name === sign.name
+      // );
+      // if (animationGroup) {
+      //   console.log("Found animation group:", animationGroup);
+
+      //   if (slider === "start") {
+      //     console.log("Goining to start frame:", start);
+      //     animationGroup.goToFrame(start);
+      //   } else if (slider === "end") {
+      //     console.log("Goining to end frame:", end);
+      //     animationGroup.goToFrame(end);
+      //   }
+
+      //   this.scene.render(); // Force one render pass after jumping to the frame
+      // }
+
       const isValid = start < end;
-      elements.previewText.style.color = isValid ? '#333' : '#F44336';
+      elements.previewText.style.color = isValid ? "#333" : "#F44336";
       elements.saveButton.disabled = !isValid;
       elements.testButton.disabled = !isValid;
 
@@ -109,25 +138,25 @@ class FrameEditor {
     const autoTestAnimation = () => {
       const newStart = parseInt(elements.startInput.value) || 0;
       const newEnd = parseInt(elements.endInput.value) || 1;
-      
+
       if (newStart >= newEnd) return;
 
       clearTimeout(autoTestTimeout);
       autoTestTimeout = setTimeout(async () => {
         const originalStart = sign.start;
         const originalEnd = sign.end;
-        
+
         sign.start = newStart;
         sign.end = newEnd;
-        
+
         // this.animationController.clearCachedAnimation(sign.name);
-        
+
         try {
           await this.animationController.playSign(sign.name);
         } catch (error) {
-          console.error('Error auto-testing animation:', error);
+          console.error("Error auto-testing animation:", error);
         }
-        
+
         sign.start = originalStart;
         sign.end = originalEnd;
         // this.animationController.clearCachedAnimation(sign.name);
@@ -144,7 +173,7 @@ class FrameEditor {
     const handleTestAnimation = async () => {
       const newStart = parseInt(elements.startInput.value) || 0;
       const newEnd = parseInt(elements.endInput.value) || 1;
-      
+
       if (newStart >= newEnd) return;
 
       elements.testButton.disabled = true;
@@ -152,21 +181,21 @@ class FrameEditor {
 
       const originalStart = sign.start;
       const originalEnd = sign.end;
-      
+
       sign.start = newStart;
       sign.end = newEnd;
-      
+
       try {
         await this.animationController.playSign(sign.name);
       } catch (error) {
-        console.error('Error testing animation:', error);
-        this.showNotification('⚠️ Error testing animation', 'error');
+        console.error("Error testing animation:", error);
+        this.showNotification("⚠️ Error testing animation", "error");
       }
-      
+
       sign.start = originalStart;
       sign.end = originalEnd;
       // this.animationController.clearCachedAnimation(sign.name);
-      
+
       elements.testButton.disabled = false;
       elements.testButton.innerHTML = "🎬 Test Animation";
     };
@@ -174,10 +203,13 @@ class FrameEditor {
     const handleSaveChanges = async () => {
       const newStart = parseInt(elements.startInput.value) || 0;
       const newEnd = parseInt(elements.endInput.value) || 1;
-      
+
       if (newStart >= newEnd) {
-        console.error('End frame must be greater than start frame!');
-        this.showNotification('End frame must be greater than start frame!', 'error');
+        console.error("End frame must be greater than start frame!");
+        this.showNotification(
+          "End frame must be greater than start frame!",
+          "error"
+        );
         return;
       }
 
@@ -194,8 +226,8 @@ class FrameEditor {
         console.log("Available signs map after save:", availableSignsMap);
         closeModal();
       } catch (error) {
-        console.error('Error saving changes:', error);
-        this.showNotification('Error saving changes', 'error');
+        console.error("Error saving changes:", error);
+        this.showNotification("Error saving changes", "error");
         elements.saveButton.disabled = false;
         elements.saveButton.innerHTML = "💾 Save Changes";
       }
@@ -203,11 +235,11 @@ class FrameEditor {
 
     // Add event listeners
     elements.startInput.addEventListener("input", () => {
-      updatePreview();
+      updatePreview("start");
       autoTestAnimation();
     });
     elements.endInput.addEventListener("input", () => {
-      updatePreview();
+      updatePreview("end");
       autoTestAnimation();
     });
     elements.closeButton.onclick = closeModal;
@@ -226,4 +258,4 @@ class FrameEditor {
   }
 }
 
-export default FrameEditor; 
+export default FrameEditor;
