@@ -23,7 +23,7 @@ class CameraController {
     this.camera.minZ = 0.01;
     this.camera.checkCollisions = false;
     this.camera.noRotationConstraint = true;
-    
+
     // Scroll speed
     this.camera.wheelPrecision = 100;
 
@@ -43,7 +43,7 @@ class CameraController {
   // Function to set the camera on a bone of the target mesh, by default the neck bone (index 4)
   setCameraOnBone(targetMesh, skeleton, boneIndex = 4) {
     // Create sphere to attatch to the neck bone
-    var sphere = MeshBuilder.CreateSphere(
+    let sphere = MeshBuilder.CreateSphere(
       "sphere1",
       {
         segments: 16,

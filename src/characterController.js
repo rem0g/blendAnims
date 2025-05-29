@@ -94,7 +94,7 @@ class CharacterController {
 
   // Load a single animation
   async loadAnimation(signName) {
-    // try {
+    try {
       // Get the sign file from the availableSigns array
       const sign = availableSigns.find((sign) => sign.name === signName);
 
@@ -129,21 +129,25 @@ class CharacterController {
       let myAnimation = result.animationGroups.find(
         (x, i) => x.name === "Unreal Take" && i != 0
       );
-      const startFrame = availableSignsMap[signName].start;
-      const endFrame = availableSignsMap[signName].end;
-
-      myAnimation = this.retargetAnimWithBlendshapes(this.character, myAnimation);
+      // myAnimation = this.retargetAnimWithBlendshapes(this.character, myAnimation);
 
       console.log("myAnimation:", myAnimation);
 
-      // Non-destructive trim of the animation
-      myAnimation.normalize(
-        availableSignsMap[signName].start,
-        availableSignsMap[signName].end
+      if (!myAnimation) {
+        console.error(`Animation group not found in ${signFile}`);
+        return null;
+      }
+
+      const frameRange = this.getFrameRange(signName, myAnimation);
+
+      console.log(
+        `Frame range for ${signName}: start=${frameRange.start}, end=${frameRange.end}`
       );
 
-      // TODO: make this dynamic, so it can be changed in the UI
-      // Hard trim of the animation
+      // Non-destructive trim of the animation
+      myAnimation.normalize(frameRange.start, frameRange.end);
+
+      // Hard trim of the animation, if needed
       // myAnimation = this.hardTrim(myAnimation, startFrame, endFrame);
 
       // const easingFunction = new BABYLON.BackEase(10);
@@ -153,10 +157,7 @@ class CharacterController {
       // console.log("Animation group before removing hips:", myAnimation);
       // myAnimation.targetedAnimations[0].animation.keys = [];
 
-      // var curMTM = 0;
-
       myAnimation.targetedAnimations.forEach((targetedAnim) => {
-        console.log("Targeted Animation:", targetedAnim);
         if (targetedAnim.target !== null && targetedAnim.animation !== null) {
           // Remove the hips animation
           if (targetedAnim.target.name === "Hips") {
@@ -183,34 +184,6 @@ class CharacterController {
             // Remove the morph target animation
             // targetedAnim.animation._keys = [];
           }
-
-          // // Check if the targeted animation is a morph target
-          // if (targetedAnim.target.name.startsWith("morphTarget")) {
-          //   const manager = this.morphTargetManagers[curMTM];
-          //   const index = this.getMorphTargetIndex(manager, targetedAnim.target.name);
-
-          //   console.log("Found morph target at index:", targetedAnim.target.name, index);
-          //   manager.dispose(manager.getTarget(index));
-          //   manager.addTarget(targetedAnim.target);
-          //   curMTM++;
-
-          //   console.log("curMTM:", curMTM);
-
-          //   if (curMTM >= this.morphTargetManagers.length) {
-          //     curMTM = 0; // Reset to the first morph target manager if we exceed the count
-          //   }
-
-          //   console.log(
-          //     `Added morph target: ${targetedAnim.target.name} at index ${index}`
-          //   );
-          // if (morphTargetIndex !== -1) {
-
-          // } else {
-          //   console.warn(
-          //     `Morph target not found: ${targetedAnim.target.name}`
-          //   );
-          // }
-          // }
         }
       });
 
@@ -222,11 +195,48 @@ class CharacterController {
       // ogen zetten op camera
 
       return myAnimation;
-    // } 
-    // catch (error) {
-    //   console.error("Error in loadAnimation:", error.message);
-    //   return null;
-    // }
+    } catch (error) {
+      console.error("Error in loadAnimation:", error.message);
+      return null;
+    }
+  }
+
+  // Get the frame range from the availableSignsMap, otherwise use the animationGroup's from and to values
+  getFrameRange(signName, animationGroup) {
+    const sign = availableSignsMap[signName];
+    if (!sign) {
+      console.error(`Sign not found: ${signName}`);
+      return null;
+    }
+
+    let startFrame;
+    if (availableSignsMap[signName].start == null) {
+      startFrame = animationGroup.from;
+      console.warn(
+        `No start frame defined for ${signName}, using animation start frame: ${startFrame}`
+      );
+      availableSignsMap[signName].start = startFrame;
+    } else {
+      startFrame = availableSignsMap[signName].start;
+    }
+
+    let endFrame;
+    if (availableSignsMap[signName].end == null) {
+      endFrame = animationGroup.to;
+      console.warn(
+        `No end frame defined for ${signName}, using animation end frame: ${endFrame}`
+      );
+      availableSignsMap[signName].end = endFrame;
+    } else {
+      endFrame = availableSignsMap[signName].end;
+    }
+
+    console.log(availableSignsMap);
+
+    return {
+      start: startFrame,
+      end: endFrame,
+    };
   }
 
   /*
@@ -249,10 +259,10 @@ class CharacterController {
   retargetAnimWithBlendshapes(targetMeshAsset, animGroup, cloneName = "anim") {
     console.log("Retargeting animation to target mesh...");
 
-    var morphName = null;
-    var curMTM = 0;
-    var morphIndex = 0;
-    var mtm;
+    let morphName = null;
+    let curMTM = 0;
+    let morphIndex = 0;
+    let mtm;
 
     return animGroup.clone(cloneName, (target) => {
       if (!target) {
@@ -260,10 +270,9 @@ class CharacterController {
         return null;
       }
 
-
       // First set all bone targets to the linkedTransformNode
       let idx = targetMeshAsset.skeletons[0].getBoneIndexByName(target.name);
-      var targetBone = targetMeshAsset.skeletons[0].bones[idx];
+      let targetBone = targetMeshAsset.skeletons[0].bones[idx];
       if (targetBone) {
         return targetBone._linkedTransformNode;
       }
@@ -306,7 +315,7 @@ class CharacterController {
       return -1;
     }
 
-    for (var i = 0; i < morphTargetManager.numTargets; i++) {
+    for (let i = 0; i < morphTargetManager.numTargets; i++) {
       if (morphTargetManager.getTarget(i).name === targetName) {
         return i;
       }
@@ -318,7 +327,7 @@ class CharacterController {
   // Delete the keyframes outside the start and end frames from the animationgroup
   hardTrim(animationGroup, start, end) {
     animationGroup.targetedAnimations.forEach((e) => {
-      var keys = e.animation.getKeys();
+      let keys = e.animation.getKeys();
       const startIndex = keys.findIndex((e) => e.frame >= start);
       const endIndex = keys.findIndex((e) => e.frame >= end);
       keys = e.animation.getKeys().slice(startIndex, endIndex);
@@ -347,7 +356,7 @@ class CharacterController {
     return animationResult;
   }
 
-  // Play a single animation (depricated)
+  // Play a single animation using the sign name
   async playAnimation(signName) {
     return new Promise((resolve, reject) => {
       try {
@@ -408,7 +417,7 @@ class CharacterController {
     });
   }
 
-  // Play the animationgroup
+  // Play the given animation group
   async playAnimationGroup(animationGroup) {
     return new Promise((resolve, reject) => {
       try {

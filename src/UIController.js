@@ -4,21 +4,21 @@ import FrameEditor from "./FrameEditor";
 // Class to handle UI elements and interactions, such as drag and drop
 class UIController {
   // Show notification to user
-  showNotification(message, type = 'info') {
+  showNotification(message, type = "info") {
     // Remove any existing notifications
-    const existingNotification = document.querySelector('.notification');
+    const existingNotification = document.querySelector(".notification");
     if (existingNotification) {
       existingNotification.remove();
     }
 
     // Create notification element
-    const notification = document.createElement('div');
+    const notification = document.createElement("div");
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
-    
+
     // Add to body
     document.body.appendChild(notification);
-    
+
     // Auto-remove after 3 seconds
     setTimeout(() => {
       if (notification.parentNode) {
@@ -44,7 +44,10 @@ class UIController {
     this.controlsEnabled = false; // Flag to enable/disable controls
     this.blending = true; // Blending flag
     this.isRecording = false; // Flag to indicate if recording is active
-    this.frameEditor = new FrameEditor(animationController, this.showNotification.bind(this));
+    this.frameEditor = new FrameEditor(
+      animationController,
+      this.showNotification.bind(this)
+    );
 
     // Bind methods to maintain proper 'this' context
     this.filterSignLibrary = this.filterSignLibrary.bind(this);
@@ -103,12 +106,16 @@ class UIController {
     // Create the blending toggle button
     const blendingToggleButton = document.createElement("button");
     blendingToggleButton.className = "blending-toggle-button";
-    blendingToggleButton.innerHTML = this.blending ? "Disable Blending" : "Enable Blending";
+    blendingToggleButton.innerHTML = this.blending
+      ? "Disable Blending"
+      : "Enable Blending";
     blendingToggleButton.title = "Enable/Disable Blending";
     blendingToggleButton.onclick = () => {
       this.blending = !this.blending;
       blendingToggleButton.classList.toggle("active", this.blending);
-      blendingToggleButton.innerHTML = this.blending ? "Disable Blending" : "Enable Blending";
+      blendingToggleButton.innerHTML = this.blending
+        ? "Disable Blending"
+        : "Enable Blending";
     };
     headerContainer.appendChild(blendingToggleButton);
 
@@ -276,8 +283,30 @@ class UIController {
   populateSignLibrary() {
     const library = document.getElementById("sign-library");
 
-    // Sort signs alphabetically
-    this.availableSigns.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort signs alphabetically, then numbers, and then mixed
+    this.availableSigns.sort((a, b) => {
+      // Custom sorting logic to handle numbers and letters
+      const getSortCategory = (name) => {
+        const trimmed = name.trim();
+        if (/^[A-Z]/.test(trimmed)) return 0; // Starts with a letter
+        if (/^\d+$/.test(trimmed)) return 1; // Pure number
+        if (/^\d+ /.test(trimmed)) return 2; // Number with words (e.g., "5 OVER")
+        return 3; // Catch-all for anything else
+      };
+      const aCategory = getSortCategory(a.name);
+      const bCategory = getSortCategory(b.name);
+
+      if (aCategory !== bCategory) {
+        return aCategory - bCategory; // Sort by category first
+      }
+
+      if (a.name < b.name) {
+        return -1; // Sort alphabetically
+      } else if (a.name > b.name) {
+        return 1; // Sort alphabetically
+      }
+      return 0; // Names are equal
+    });
 
     this.availableSigns.forEach((sign) => {
       const signItem = document.createElement("div");
@@ -388,6 +417,7 @@ class UIController {
       // Frame range display
       const frameSpan = document.createElement("span");
       frameSpan.className = "sequence-item-frames";
+
       frameSpan.textContent = `Frames: ${item.sign.start} - ${item.sign.end}`;
       signInfo.appendChild(frameSpan);
 
@@ -402,7 +432,8 @@ class UIController {
       playButton.className = "play-button small-button";
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
-      playButton.onclick = () => this.animationController.playSign(item.sign.name, sequenceItem);
+      playButton.onclick = () =>
+        this.animationController.playSign(item.sign.name, sequenceItem);
       controls.appendChild(playButton);
 
       const editButton = document.createElement("button");
