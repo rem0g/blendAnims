@@ -22,8 +22,50 @@ body {
   display: flex;
   flex-direction: column;
   z-index: 10;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px;
+}
+
+/* === Save/Load Modal Styles === */
+.save-load-modal {
+  backdrop-filter: blur(4px);
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 500;
+  z-index: 10001;
+  animation: slideDown 0.3s ease-out;
+}
+
+.notification-success {
+  background-color: #4CAF50;
+}
+
+.notification-error {
+  background-color: #F44336;
+}
+
+.notification-info {
+  background-color: #2196F3;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
 }
 
 .show-button {
@@ -94,6 +136,7 @@ h2 {
   overflow: hidden;
 }
 
+
 /* === Search === */
 .search-container {
   margin-bottom: 10px;
@@ -146,6 +189,53 @@ h2 {
 .sign-item.dragging {
   opacity: 0.7;
   cursor: grabbing;
+}
+
+/* === Folder Sections === */
+.folder-section {
+  margin-bottom: 8px;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #e8e8e8;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  transition: background-color 0.2s;
+}
+
+.folder-header:hover {
+  background-color: #d4edda;
+}
+
+.folder-icon {
+  margin-right: 8px;
+  color: #666;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.folder-name {
+  flex: 1;
+  color: #333;
+}
+
+.folder-count {
+  color: #666;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.folder-content {
+  padding-left: 8px;
+  border-left: 2px solid #e0e0e0;
+  margin-left: 8px;
 }
 
 .sign-info {
@@ -268,9 +358,50 @@ h2 {
   gap: 5px;
 }
 
+/* Drop indicators */
+.drop-indicator {
+  height: 8px;
+  background-color: transparent;
+  margin: 4px 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+  border: 2px dashed transparent;
+}
+
+.drop-indicator.active {
+  background-color: rgba(33, 150, 243, 0.2);
+  border-color: #2196F3;
+  height: 12px;
+  margin: 8px 0;
+}
+
+.drop-indicator.active::before {
+  content: 'Drop here';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #2196F3;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+/* Debug styling - remove in production */
+.drop-indicator {
+  /* Uncomment for debugging */
+  /* background-color: rgba(255, 0, 0, 0.1); */
+  /* border: 1px solid red; */
+}
+
 /* === Controls === */
 .sequence-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -294,10 +425,46 @@ h2 {
 }
 
 .control-button {
-  padding: 10px 10px;
-  font-size: 15px;
+  padding: 8px 12px;
+  font-size: 14px;
   font-weight: bold;
-  flex: 1;
+  flex: 0 1 auto;
+  min-width: 80px;
+}
+
+.save-sequence-button {
+  background-color: #4CAF50;
+}
+
+.save-sequence-button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.load-sequence-button {
+  background-color: #FF9800;
+}
+
+.load-sequence-button:hover:not(:disabled) {
+  background-color: #F57C00;
+}
+
+.record-sequence-button {
+  background-color: #F44336;
+}
+
+.record-sequence-button:hover:not(:disabled) {
+  background-color: #D32F2F;
+}
+
+.record-sequence-button.active {
+  background-color: #D32F2F;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 .small-button {
@@ -344,6 +511,25 @@ h2 {
 
 .remove-button:hover {
   background-color: #D32F2F;
+}
+
+/* Move up/down buttons */
+.move-up-button,
+.move-down-button {
+  background-color: #9C27B0;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.move-up-button:hover,
+.move-down-button:hover {
+  background-color: #7B1FA2;
+}
+
+.move-up-button:disabled,
+.move-down-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 /* === Disabled state === */
