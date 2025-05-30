@@ -58,7 +58,7 @@ class CameraController {
 
     // Get the bone's absolute position
     // This is hardcoded for now, it is somehow not possible to find the right coordinates of the neck bone in world space
-    const bonePosition = new Vector3(0, 1.6, 0);
+    const bonePosition = new Vector3(0, 1.2, 0);
     sphere.position = bonePosition;
     // sphere.attachToBone(bone, targetMesh);
 

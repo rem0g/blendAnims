@@ -1,3 +1,5 @@
+import VideoRecorder from './videoRecorder.js';
+
 // Class to contol the animations of the avatar
 class AnimationController {
   constructor(engine, scene, characterController, isPlaying) {
@@ -6,6 +8,7 @@ class AnimationController {
     this.characterController = characterController;
     this.isPlaying = isPlaying;
     this.transitionDuration = 0.5; // Duration for blending animations hardcoded for now
+    this.videoRecorder = null;
   }
 
   // Initialize the AnimationController
@@ -75,27 +78,19 @@ class AnimationController {
 
     if (isRecording) {
       console.log("Starting video recording...");
-      const recorder = new BABYLON.VideoRecorder(this.engine, this.scene, {
-        fps: 60,
-        mimeType: "video/webm", // or "video/webm;codecs=vp9"
-      });
-
-      console.log("Video recorder created:", recorder);
-
-      if (!recorder) {
-        console.error("Failed to create video recorder");
-        return;
-      }
-      this.recorder = recorder;
-
-      // Add startup frames
-
-      // Try to start recording
-      if (this.recorder) {
-        console.log("Starting recording...");
-        const animationNames = signNames.join("-") + ".webm"; // Use the sign names as the filename
-        this.recorder.startRecording(animationNames, 60);
-        console.log("Recording started successfully", this.recorder);
+      const canvas = this.engine.getRenderingCanvas();
+      this.videoRecorder = new VideoRecorder(this.engine, this.scene, canvas);
+      
+      try {
+        const animationNames = signNames.join("-") + ".mp4";
+        await this.videoRecorder.startRecording(animationNames, {
+          fps: 60,
+          videoBitrate: 40000000 // Fixed 40 Mbps
+        });
+        console.log("Recording started successfully at 40 Mbps");
+      } catch (error) {
+        console.error("Failed to start recording:", error);
+        this.videoRecorder = null;
       }
     }
 
@@ -170,11 +165,10 @@ class AnimationController {
             }
 
             // Stop recording if recording was enabled
-            if (isRecording && this.recorder) {
+            if (isRecording && this.videoRecorder) {
               try {
-                console.log("Stopping recording...", this.recorder);
-                this.recorder.stopRecording()
-                
+                console.log("Stopping recording...");
+                this.videoRecorder.stopRecording();
               } catch (error) {
                 console.error("Error stopping recording:", error);
               }
@@ -208,9 +202,9 @@ class AnimationController {
     } catch (error) {
       console.error(`Error loading animations for blending:`, error);
       // Make sure to stop recording if there's an error
-      if (isRecording && this.recorder) {
+      if (isRecording && this.videoRecorder) {
         try {
-          this.recorder.stopRecording();
+          this.videoRecorder.stopRecording();
           console.log("Recording stopped due to error.");
         } catch (stopError) {
           console.error("Error stopping recording after error:", stopError);
