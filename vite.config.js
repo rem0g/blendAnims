@@ -2,8 +2,11 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   // Base URL for GitHub Pages
-  // Replace 'SignBlendingInterface' with your actual repository name
-  base: '/SignBlendingInterface/',
+  // Update this to match your GitHub repository name
+  // For example: if your repo is https://github.com/username/my-repo
+  // then use: base: '/my-repo/'
+  // If deploying to https://username.github.io/, use base: '/'
+  base: '/blendAnims/',
   
   build: {
     // Output directory
