@@ -424,6 +424,7 @@ h2 {
 .play-button,
 .control-button,
 .edit-button,
+.add-button,
 .small-button {
   border: none;
   border-radius: 4px;
@@ -436,6 +437,21 @@ h2 {
 .play-button {
   padding: 6px 12px;
   font-size: 14px;
+}
+
+.add-button {
+  padding: 6px 12px;
+  font-size: 14px;
+  background-color: #4CAF50;
+}
+
+.add-button:hover {
+  background-color: #45a049;
+}
+
+.add-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .control-button {
@@ -919,5 +935,44 @@ h2 {
 .camera-center {
   background-color: #f0f0f0;
   border-radius: 4px;
+}
+
+/* API Search Results */
+.api-results-section {
+  border: 2px solid #2196F3;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.api-results-section .folder-header {
+  background-color: #E3F2FD;
+}
+
+.api-sign {
+  background-color: #F5F5F5;
+}
+
+.api-sign.downloading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.api-sign .sign-description {
+  color: #1976D2;
+  font-style: italic;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.error-message {
+  text-align: center;
+  padding: 20px;
+  color: #D32F2F;
+  font-weight: bold;
 }
 

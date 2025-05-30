@@ -32,5 +32,17 @@ export default defineConfig({
   // Optimize dependencies
   optimizeDeps: {
     include: ['babylonjs', 'babylonjs-loaders', '@babylonjs/gui']
+  },
+  
+  // Development server configuration
+  server: {
+    proxy: {
+      // Proxy requests to SignCollect API during development
+      '/api/signcollect': {
+        target: 'https://signcollect.nl',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/signcollect/, '')
+      }
+    }
   }
 })

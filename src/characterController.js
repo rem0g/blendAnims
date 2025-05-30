@@ -93,13 +93,14 @@ class CharacterController {
   }
 
   // Load a single animation
-  async loadAnimation(signName, shouldClone = false) {
+  async loadAnimation(signName, shouldClone = false, apiSign = null) {
     try {
-      // Get the sign file from the availableSigns array
-      const sign = availableSigns.find((sign) => sign.name === signName);
+      // Get the sign file from the availableSigns array or use API sign
+      let sign = apiSign || availableSigns.find((sign) => sign.name === signName);
 
       if (!sign) {
-        console.error(`Sign not found: ${signName}`);
+        console.error(`Sign not found: ${signName}`, `apiSign:`, apiSign);
+        console.error(`Available signs:`, availableSigns.map(s => s.name));
         return null;
       }
 
@@ -124,11 +125,18 @@ class CharacterController {
       }
 
       const signFile = sign.file;
-      console.log("Loading animation:", signFile);
+      console.log("Loading animation:", signFile, sign.isApi ? "(from API)" : "(local)");
+
+      // For API signs, we need to specify the file extension for proper loading
+      let loadUrl = signFile;
+      if (sign.isApi && !signFile.includes('.glb')) {
+        // Ensure .glb extension is in the URL for proper plugin detection
+        loadUrl = signFile.includes('.fbx') ? signFile.replace(/\.fbx$/i, '.glb') : signFile + '.glb';
+      }
 
       const result = await SceneLoader.ImportAnimationsAsync(
         "",
-        signFile,
+        loadUrl,
         this.scene,
         false,
         BABYLON.SceneLoaderAnimationGroupLoadingMode.NoSync
@@ -214,8 +222,12 @@ class CharacterController {
   getFrameRange(signName, animationGroup) {
     const sign = availableSignsMap[signName];
     if (!sign) {
-      console.error(`Sign not found: ${signName}`);
-      return null;
+      // For API-loaded signs, use the full animation range
+      console.log(`Sign not in local library: ${signName}, using full animation range`);
+      return {
+        start: animationGroup.from,
+        end: animationGroup.to
+      };
     }
 
     let startFrame;
@@ -356,14 +368,29 @@ class CharacterController {
   }
 
   // Load multiple animations and add them to the queue
-  async loadMultipleAnimations(signNames) {
+  async loadMultipleAnimations(signNames, sequenceItems = null) {
     const animationResult = [];
 
-    for (const signName of signNames) {
+    for (let i = 0; i < signNames.length; i++) {
+      const signName = signNames[i];
+      const sequenceItem = sequenceItems ? sequenceItems[i] : null;
+      
+      // Check if this is an API sign
+      let apiSign = null;
+      if (sequenceItem && sequenceItem.sign && sequenceItem.sign.isApi) {
+        apiSign = {
+          name: sequenceItem.sign.name,
+          file: sequenceItem.sign.file,
+          isApi: true,
+          originalUrl: sequenceItem.sign.originalUrl,
+          filename: sequenceItem.sign.filename
+        };
+      }
+      
       // Clone animations when loading for sequence playback
-      const result = await this.loadAnimation(signName, true);
+      const result = await this.loadAnimation(signName, true, apiSign);
       animationResult.push(result);
-      console.log("Loaded:", signName);
+      console.log("Loaded:", signName, apiSign ? "(API)" : "(local)");
     }
 
     return animationResult;
@@ -398,6 +425,14 @@ class CharacterController {
           const animationGroup = this.scene.animationGroups.find(
             (group) => group.name === signName
           );
+          
+          if (!animationGroup) {
+            console.error(`Animation group not found for sign: ${signName}`);
+            this.isPlaying = false;
+            reject(`Animation group not found for sign: ${signName}`);
+            return;
+          }
+          
           this.currentAnimationGroup = animationGroup;
 
           // Set up position
@@ -412,11 +447,7 @@ class CharacterController {
             resolve();
           });
 
-          // Normalize the animation group to the start and end frames
-          animationGroup.normalize(
-            availableSignsMap[signName].start,
-            availableSignsMap[signName].end
-          );
+          // The animation has already been normalized in loadAnimation, no need to do it again
 
           // Start the animation (not looping)
           animationGroup.start(false);
@@ -473,11 +504,9 @@ class CharacterController {
 
   // Add the animation to the root mesh and set its position
   addAnimationToRootMesh(animationGroup) {
-    animationGroup.parent = this.rootMesh;
-
-    // Rotate the root mesh 90 degrees on the X axis
-    // this.rootMesh.rotation = new Vector3(Math.PI / 2, Math.PI, 0);
-
+    // Animation groups don't have a parent property - they're applied to meshes/bones
+    // The animation targets are already set during retargeting
+    
     // Adjust the position of the root mesh to be in the center of the scene
     this.rootMesh.position = new Vector3(0, 0, -0.25);
 

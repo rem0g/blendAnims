@@ -2,6 +2,7 @@ import { Grid } from "@babylonjs/gui";
 import FrameEditor from "./frameEditor";
 import { availableSignsMap } from "./availableSigns";
 import SequencerAPI from "./sequencerAPI";
+import SignCollectAPI from "./signCollectAPI";
 
 // Class to handle UI elements and interactions, such as drag and drop
 class UIController {
@@ -32,9 +33,12 @@ class UIController {
       this.updateSequenceUI.bind(this)
     );
     
-    // Initialize the API client
+    // Initialize the API clients
     this.sequencerAPI = new SequencerAPI();
+    this.signCollectAPI = new SignCollectAPI();
     this.currentSequenceId = null; // Track current sequence for updates
+    this.apiSearchResults = []; // Store API search results
+    this.searchTimeout = null; // For debouncing search
 
     // Bind methods to maintain proper 'this' context
     this.filterSignLibrary = this.filterSignLibrary.bind(this);
@@ -43,6 +47,7 @@ class UIController {
     this.updateSequenceUI = this.updateSequenceUI.bind(this);
     this.removeFromSequence = this.removeFromSequence.bind(this);
     this.addToSequence = this.addToSequence.bind(this);
+    this.handleSearchInput = this.handleSearchInput.bind(this);
     
     // Autosave timer
     this.autosaveTimer = null;
@@ -148,9 +153,9 @@ class UIController {
 
     const searchInput = document.createElement("input");
     searchInput.type = "text";
-    searchInput.placeholder = "Search signs...";
+    searchInput.placeholder = "Search signs (local & online)...";
     searchInput.className = "search-input";
-    searchInput.addEventListener("input", this.filterSignLibrary);
+    searchInput.addEventListener("input", (e) => this.handleSearchInput(e.target.value));
     searchContainer.appendChild(searchInput);
 
     libraryColumn.appendChild(searchContainer);
@@ -345,6 +350,355 @@ class UIController {
         }
       }
     });
+  }
+
+  // Handle search input with debouncing for API search
+  handleSearchInput(searchTerm) {
+    // Clear previous timeout
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    // Filter local signs immediately
+    this.filterLocalSigns(searchTerm);
+
+    // Set up debounced API search
+    if (searchTerm.length >= 2) {
+      this.searchTimeout = setTimeout(() => {
+        this.searchAPIForSigns(searchTerm);
+      }, 500); // 500ms delay
+    } else {
+      // Clear API results if search is too short
+      this.clearAPIResults();
+    }
+  }
+
+  // Perform combined local and API search
+  async performSearch(searchTerm) {
+    if (!searchTerm) {
+      this.filterSignLibrary();
+      this.clearAPIResults();
+      return;
+    }
+
+    // Filter local signs
+    this.filterLocalSigns(searchTerm);
+
+    // Search API if term is long enough
+    if (searchTerm.length >= 2) {
+      await this.searchAPIForSigns(searchTerm);
+    }
+  }
+
+  // Filter local signs (similar to filterSignLibrary but doesn't clear search)
+  filterLocalSigns(searchTerm) {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+
+    if (!lowerSearchTerm) {
+      // Show all local signs
+      document.querySelectorAll(".sign-item:not(.api-sign)").forEach(item => {
+        item.style.display = "flex";
+      });
+      document.querySelectorAll(".folder-section").forEach(section => {
+        section.style.display = "block";
+      });
+      return;
+    }
+
+    // Hide all folder sections first
+    document.querySelectorAll(".folder-section").forEach(section => {
+      section.style.display = "none";
+    });
+
+    // Show matching items and their parent folders
+    const signItems = document.querySelectorAll(".sign-item:not(.api-sign)");
+    const visibleFolders = new Set();
+    
+    signItems.forEach((item) => {
+      const signName = item.dataset.name.toLowerCase();
+      const folder = item.dataset.folder;
+      
+      if (signName.includes(lowerSearchTerm)) {
+        item.style.display = "flex";
+        visibleFolders.add(folder);
+      } else {
+        item.style.display = "none";
+      }
+    });
+
+    // Show folders that have visible items
+    visibleFolders.forEach(folder => {
+      const folderElement = document.querySelector(`[data-folder="${folder}"]`)?.closest('.folder-section');
+      if (folderElement) {
+        folderElement.style.display = "block";
+        // Expand the folder content when searching
+        const folderContent = folderElement.querySelector('.folder-content');
+        const folderIcon = folderElement.querySelector('.folder-icon');
+        if (folderContent && folderIcon) {
+          folderContent.style.display = "block";
+          folderIcon.textContent = "▼";
+        }
+      }
+    });
+  }
+
+  // Search API for signs
+  async searchAPIForSigns(searchTerm) {
+    try {
+      this.showAPILoading();
+      
+      const results = await this.signCollectAPI.searchAnimations(searchTerm);
+      
+      if (results && results.animations && results.animations.length > 0) {
+        // Filter out signs we already have locally
+        const newSigns = results.animations.filter(apiSign => 
+          !this.availableSigns.find(localSign => localSign.name === apiSign.glos)
+        );
+        
+        this.apiSearchResults = newSigns;
+        this.displayAPIResults(newSigns);
+      } else {
+        this.clearAPIResults();
+        this.showAPIError("No results found");
+      }
+    } catch (error) {
+      console.error("API search error:", error);
+      this.showAPIError("Error searching online signs");
+    }
+  }
+
+  // Clear API search results from the UI
+  clearAPIResults() {
+    const apiSection = document.querySelector(".api-results-section");
+    if (apiSection) {
+      apiSection.remove();
+    }
+    this.apiSearchResults = [];
+  }
+
+  // Show loading state for API search
+  showAPILoading() {
+    this.clearAPIResults();
+    
+    const library = document.getElementById("sign-library");
+    const apiSection = document.createElement("div");
+    apiSection.className = "api-results-section folder-section";
+    apiSection.innerHTML = `
+      <div class="folder-header">
+        <span class="folder-icon">🔍</span>
+        <span class="folder-name">Online Results</span>
+        <span class="folder-count">Loading...</span>
+      </div>
+      <div class="folder-content" style="display: block;">
+        <div class="loading-message" style="padding: 10px; text-align: center; color: #666;">
+          Searching online signs...
+        </div>
+      </div>
+    `;
+    
+    // Insert at the beginning of the library
+    library.insertBefore(apiSection, library.firstChild);
+  }
+
+  // Show error message for API search
+  showAPIError(message) {
+    const apiSection = document.querySelector(".api-results-section");
+    if (apiSection) {
+      const content = apiSection.querySelector(".folder-content");
+      content.innerHTML = `
+        <div class="error-message" style="padding: 10px; text-align: center; color: #e74c3c;">
+          ${message}
+        </div>
+      `;
+    }
+  }
+
+  // Display API search results
+  displayAPIResults(results) {
+    this.clearAPIResults();
+    
+    if (results.length === 0) return;
+    
+    const library = document.getElementById("sign-library");
+    const apiSection = document.createElement("div");
+    apiSection.className = "api-results-section folder-section";
+    
+    // Create folder header
+    const folderHeader = document.createElement("div");
+    folderHeader.className = "folder-header";
+    folderHeader.innerHTML = `
+      <span class="folder-icon">▼</span>
+      <span class="folder-name">🌐 Online Results</span>
+      <span class="folder-count">(${results.length})</span>
+    `;
+    
+    // Create folder content
+    const folderContent = document.createElement("div");
+    folderContent.className = "folder-content";
+    folderContent.style.display = "block"; // Start expanded
+    
+    // Add each API result
+    results.forEach(apiSign => {
+      const signItem = this.createAPISignItem(apiSign);
+      folderContent.appendChild(signItem);
+    });
+    
+    // Toggle functionality
+    folderHeader.onclick = () => {
+      const isCollapsed = folderContent.style.display === 'none';
+      folderContent.style.display = isCollapsed ? 'block' : 'none';
+      folderHeader.querySelector('.folder-icon').textContent = isCollapsed ? '▼' : '▶';
+    };
+    
+    apiSection.appendChild(folderHeader);
+    apiSection.appendChild(folderContent);
+    
+    // Insert at the beginning of the library
+    library.insertBefore(apiSection, library.firstChild);
+  }
+
+  // Create sign item for API result
+  createAPISignItem(animation) {
+    const signItem = document.createElement('div');
+    signItem.className = 'sign-item api-sign';
+    signItem.dataset.name = animation.glos || animation.filename;
+    signItem.dataset.filename = animation.filename;
+    signItem.dataset.fileUrl = animation.file_url;
+    signItem.dataset.isApi = 'true';
+    
+    // Make draggable
+    signItem.draggable = true;
+    signItem.addEventListener('dragstart', async (e) => {
+      // Download the file if not already cached
+      try {
+        signItem.classList.add('downloading');
+        const cachedUrl = await this.signCollectAPI.getCachedFileUrl(animation);
+        
+        // Create a temporary sign object
+        const apiSign = {
+          name: animation.glos || animation.filename.replace(/\.(glb|fbx)$/i, ''),
+          file: cachedUrl,
+          isApi: true,
+          originalUrl: animation.file_url,
+          filename: animation.filename.replace(/\.fbx$/i, '.glb')
+        };
+        
+        // Store in drag data
+        e.dataTransfer.setData('text/plain', JSON.stringify(apiSign));
+        signItem.classList.remove('downloading');
+        signItem.classList.add('dragging');
+      } catch (error) {
+        console.error('Error preparing API sign for drag:', error);
+        e.preventDefault();
+        this.showNotification('Failed to download animation', 'error');
+      }
+    });
+    
+    signItem.addEventListener('dragend', () => {
+      signItem.classList.remove('dragging');
+      signItem.classList.remove('downloading');
+    });
+    
+    // Sign info
+    const signInfo = document.createElement('div');
+    signInfo.className = 'sign-info';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'sign-name';
+    nameSpan.textContent = animation.glos || animation.filename.replace(/\.(glb|fbx)$/i, '');
+    signInfo.appendChild(nameSpan);
+    
+    const sourceSpan = document.createElement('span');
+    sourceSpan.className = 'sign-description';
+    const displayFilename = animation.filename.replace(/\.fbx$/i, '.glb');
+    sourceSpan.textContent = 'Online: ' + displayFilename;
+    signInfo.appendChild(sourceSpan);
+    
+    signItem.appendChild(signInfo);
+    
+    // Controls
+    const controls = document.createElement('div');
+    controls.className = 'sign-controls';
+    
+    // Download/Play button
+    const playButton = document.createElement('button');
+    playButton.className = 'play-button';
+    playButton.innerHTML = '▶';
+    playButton.title = 'Download & Play';
+    playButton.onclick = async (e) => {
+      e.stopPropagation();
+      try {
+        playButton.disabled = true;
+        playButton.innerHTML = '⏳';
+        
+        const cachedUrl = await this.signCollectAPI.getCachedFileUrl(animation);
+        console.log('Got cached URL for play:', cachedUrl);
+        const apiSign = {
+          name: animation.glos || animation.filename.replace(/\.(glb|fbx)$/i, ''),
+          file: cachedUrl,
+          isApi: true
+        };
+        
+        playButton.innerHTML = '▶';
+        await this.animationController.playSign(apiSign.name, signItem, apiSign);
+        
+        playButton.disabled = false;
+      } catch (error) {
+        console.error('Error playing API animation:', error);
+        playButton.innerHTML = '❌';
+        this.showNotification('Failed to load animation', 'error');
+        setTimeout(() => {
+          playButton.innerHTML = '▶';
+          playButton.disabled = false;
+        }, 2000);
+      }
+    };
+    controls.appendChild(playButton);
+    
+    // Add to sequence button
+    const addButton = document.createElement('button');
+    addButton.className = 'add-button';
+    addButton.innerHTML = '+';
+    addButton.title = 'Add to sequence';
+    addButton.onclick = async (e) => {
+      e.stopPropagation();
+      try {
+        addButton.disabled = true;
+        addButton.innerHTML = '⏳';
+        
+        const cachedUrl = await this.signCollectAPI.getCachedFileUrl(animation);
+        const apiSign = {
+          name: animation.glos || animation.filename.replace(/\.(glb|fbx)$/i, ''),
+          file: cachedUrl,
+          isApi: true,
+          originalUrl: animation.file_url,
+          filename: animation.filename.replace(/\.fbx$/i, '.glb')
+        };
+        
+        // Add to sequence
+        this.addToSequence(apiSign);
+        
+        addButton.innerHTML = '✓';
+        this.showNotification(`Added "${apiSign.name}" to sequence`, 'success');
+        
+        setTimeout(() => {
+          addButton.innerHTML = '+';
+          addButton.disabled = false;
+        }, 1000);
+      } catch (error) {
+        console.error('Error adding API animation to sequence:', error);
+        addButton.innerHTML = '❌';
+        this.showNotification('Failed to add animation', 'error');
+        setTimeout(() => {
+          addButton.innerHTML = '+';
+          addButton.disabled = false;
+        }, 2000);
+      }
+    };
+    controls.appendChild(addButton);
+    
+    signItem.appendChild(controls);
+    return signItem;
   }
 
   // Function to add the signs to the library with folder sections
@@ -586,12 +940,29 @@ class UIController {
       playButton.innerHTML = "▶";
       playButton.title = `Play "${item.sign.name}"`;
       playButton.onclick = async () => {
+        console.log("Playing sequence item:", item);
+        console.log("Sign object:", item.sign);
+        console.log("Is API?", item.sign.isApi);
+        
+        // Prepare API sign if needed
+        let apiSign = null;
+        if (item.sign.isApi) {
+          apiSign = {
+            name: item.sign.name,
+            file: item.sign.file,
+            isApi: true,
+            originalUrl: item.sign.originalUrl,
+            filename: item.sign.filename
+          };
+          console.log("Created API sign object:", apiSign);
+        }
+        
         // For sequence items, apply their specific frame range
-        const animationGroup = await this.characterController.loadAnimation(item.sign.name);
+        const animationGroup = await this.characterController.loadAnimation(item.sign.name, false, apiSign);
         if (animationGroup && item.frameRange) {
           animationGroup.normalize(item.frameRange.start, item.frameRange.end);
         }
-        this.animationController.playSign(item.sign.name, sequenceItem);
+        this.animationController.playSign(item.sign.name, sequenceItem, apiSign);
       };
       controls.appendChild(playButton);
 
@@ -602,8 +973,20 @@ class UIController {
       editButton.onclick = async (e) => {
         e.stopPropagation();
         console.log("Editing sign:", item);
+        // Prepare API sign if needed
+        let apiSign = null;
+        if (item.sign.isApi) {
+          apiSign = {
+            name: item.sign.name,
+            file: item.sign.file,
+            isApi: true,
+            originalUrl: item.sign.originalUrl,
+            filename: item.sign.filename
+          };
+        }
+        
         // Load animation to get actual frame count
-        const animationGroup = await this.characterController.loadAnimation(item.sign.name);
+        const animationGroup = await this.characterController.loadAnimation(item.sign.name, false, apiSign);
         this.showFrameEditor(item.sign, frameSpan, animationGroup, item);
       };
       controls.appendChild(editButton);
@@ -738,10 +1121,16 @@ class UIController {
     // Create a deep clone of the sign to avoid modifying the original
     const clonedSign = { ...sign };
     
-    // Copy the frame values from availableSignsMap
-    const frameData = availableSignsMap[sign.name];
-    clonedSign.start = frameData.start;
-    clonedSign.end = frameData.end;
+    // Copy the frame values from availableSignsMap or use defaults for API signs
+    if (sign.isApi) {
+      // For API signs, use default frame values
+      clonedSign.start = 0;
+      clonedSign.end = null; // Will be determined after loading
+    } else {
+      const frameData = availableSignsMap[sign.name];
+      clonedSign.start = frameData.start;
+      clonedSign.end = frameData.end;
+    }
     
     // Count how many times this sign appears in the sequence already
     const takeNumber = this.sequenceItems.filter(item => item.sign.name === sign.name).length + 1;
@@ -771,10 +1160,16 @@ class UIController {
     // Create a deep clone of the sign to avoid modifying the original
     const clonedSign = { ...sign };
     
-    // Copy the frame values from availableSignsMap
-    const frameData = availableSignsMap[sign.name];
-    clonedSign.start = frameData.start;
-    clonedSign.end = frameData.end;
+    // Copy the frame values from availableSignsMap or use defaults for API signs
+    if (sign.isApi) {
+      // For API signs, use default frame values
+      clonedSign.start = 0;
+      clonedSign.end = null;
+    } else {
+      const frameData = availableSignsMap[sign.name];
+      clonedSign.start = frameData.start;
+      clonedSign.end = frameData.end;
+    }
     
     // Count how many times this sign appears in the sequence already
     const takeNumber = this.sequenceItems.filter(item => item.sign.name === sign.name).length + 1;
@@ -858,13 +1253,13 @@ class UIController {
     this.autosaveTimer = setTimeout(async () => {
       try {
         const autoSaveName = "Autosave: " + this.generateSequenceName();
-        const sequenceData = {
-          name: autoSaveName,
-          sequence: this.sequenceItems
-        };
         
-        // Save to API
-        const result = await this.sequencerAPI.saveSequence(sequenceData);
+        // Save to API with proper parameters
+        const result = await this.sequencerAPI.saveSequence(
+          autoSaveName,
+          this.sequenceItems,
+          { sequence_id: this.currentSequenceId }
+        );
         if (result.success) {
           this.showNotification("Autosaved", "success");
           // Update current sequence ID for future saves
@@ -1164,8 +1559,29 @@ class UIController {
       
       // Load each item
       for (const item of sequence.items) {
-        // Find the sign in available signs
-        const sign = this.availableSigns.find(s => s.name === item.sign_name);
+        // Find the sign in available signs or reconstruct API sign
+        let sign = this.availableSigns.find(s => s.name === item.sign_name);
+        
+        // If not found locally and has API metadata, reconstruct as API sign
+        if (!sign && item.item_data && item.item_data.is_api) {
+          // Create a minimal animation object for getCachedFileUrl
+          const animation = {
+            filename: item.item_data.filename,
+            file_url: item.item_data.file_url
+          };
+          
+          // Get cached URL (this will download if not already cached)
+          const cachedUrl = await this.signCollectAPI.getCachedFileUrl(animation);
+          
+          sign = {
+            name: item.sign_name,
+            file: cachedUrl,
+            isApi: true,
+            originalUrl: item.item_data.file_url,
+            filename: item.item_data.filename
+          };
+        }
+        
         if (sign) {
           // Create sequence item with saved frame ranges
           const itemId = this.nextItemId++;
@@ -1180,6 +1596,8 @@ class UIController {
               end: item.frame_end
             }
           });
+        } else {
+          console.warn(`Sign "${item.sign_name}" not found in library`);
         }
       }
       

@@ -27,7 +27,9 @@ class SequencerAPI {
         take_number: item.sign.takeNumber || 1,
         item_data: {
           original_id: item.id,
-          // Add any additional item data here
+          is_api: item.sign.isApi || false,
+          file_url: item.sign.originalUrl || null,
+          filename: item.sign.filename || null
         }
       }));
 

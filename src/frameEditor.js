@@ -28,6 +28,9 @@ class FrameEditor {
       this.animationController.isPlaying = false;
     }
     
+    // Store the sign for later use in test animation
+    this.currentSign = sign;
+    
     const modal = this.createFrameEditorModal(sign, animationGroup, sequenceItem);
     document.body.appendChild(modal);
 
@@ -43,7 +46,14 @@ class FrameEditor {
     console.log("Available signs map updated:", availableSignsMap);
 
     // Use sequence item's frame range if editing from sequence, otherwise use global
-    const frameStart = sequenceItem ? sequenceItem.frameRange.start : (availableSignsMap[sign.name]?.start || 0);
+    let frameStart = 0;
+    if (sequenceItem) {
+      frameStart = sequenceItem.frameRange.start;
+    } else if (!sign.isApi && availableSignsMap[sign.name]) {
+      frameStart = availableSignsMap[sign.name].start || 0;
+    } else if (sign.start !== undefined) {
+      frameStart = sign.start;
+    }
     
     // Get the actual animation end frame from the animation group
     let maxFrames = 250; // Default fallback
@@ -52,7 +62,14 @@ class FrameEditor {
       console.log(`Animation ${sign.name} has ${maxFrames} frames total`);
     }
     
-    const frameEnd = sequenceItem ? sequenceItem.frameRange.end : (availableSignsMap[sign.name]?.end || maxFrames);
+    let frameEnd = maxFrames;
+    if (sequenceItem) {
+      frameEnd = sequenceItem.frameRange.end;
+    } else if (!sign.isApi && availableSignsMap[sign.name]) {
+      frameEnd = availableSignsMap[sign.name].end || maxFrames;
+    } else if (sign.end !== undefined && sign.end !== null) {
+      frameEnd = sign.end;
+    }
 
     console.log("Sign to edit:", sign);
     const modal = document.createElement("div");
@@ -228,7 +245,18 @@ class FrameEditor {
       sign.end = newEnd;
 
       try {
-        await this.animationController.playSign(sign.name);
+        // Create API sign object if needed
+        let apiSign = null;
+        if (sign.isApi) {
+          apiSign = {
+            name: sign.name,
+            file: sign.file,
+            isApi: true,
+            originalUrl: sign.originalUrl,
+            filename: sign.filename
+          };
+        }
+        await this.animationController.playSign(sign.name, null, apiSign);
       } catch (error) {
         console.error("Error testing animation:", error);
         this.showNotification("⚠️ Error testing animation", "error");
@@ -270,15 +298,19 @@ class FrameEditor {
           // Otherwise update the sign and global map
           sign.start = newStart;
           sign.end = newEnd;
-          availableSignsMap[sign.name] = {
-            ...availableSignsMap[sign.name],
-            start: newStart,
-            end: newEnd,
-          };
-          // Update all frame info displays in the library
-          const frameInfo = document.getElementById(`frame-info-${sign.name}`);
-          if (frameInfo) {
-            frameInfo.textContent = `Frames: ${newStart} - ${newEnd}`;
+          
+          // Only update availableSignsMap if it's not an API sign
+          if (!sign.isApi && availableSignsMap[sign.name]) {
+            availableSignsMap[sign.name] = {
+              ...availableSignsMap[sign.name],
+              start: newStart,
+              end: newEnd,
+            };
+            // Update all frame info displays in the library
+            const frameInfo = document.getElementById(`frame-info-${sign.name}`);
+            if (frameInfo) {
+              frameInfo.textContent = `Frames: ${newStart} - ${newEnd}`;
+            }
           }
         }
         console.log("Available signs map after save:", availableSignsMap);

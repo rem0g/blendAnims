@@ -17,13 +17,13 @@ class AnimationController {
   }
 
   // Play a single sign animation
-  async playSign(signName, signItem) {
-    console.log(`Playing sign: ${signName}`);
+  async playSign(signName, signItem, apiSign = null) {
+    console.log(`Playing sign: ${signName}`, apiSign ? "(API)" : "(local)");
 
     if (this.characterController) {
       try {
         // Load and queue the animation
-        await this.characterController.loadAnimation(signName);
+        await this.characterController.loadAnimation(signName, false, apiSign);
 
         if (signItem) {
           signItem.classList.add("playing");
@@ -97,7 +97,7 @@ class AnimationController {
     try {
       // Load all animation groups for blending
       const animationGroups =
-        await this.characterController.loadMultipleAnimations(signNames);
+        await this.characterController.loadMultipleAnimations(signNames, sequenceItems);
 
       if (!animationGroups || animationGroups.length == 0) {
         console.warn("No animation groups loaded for blending");
@@ -110,12 +110,55 @@ class AnimationController {
       const playNextAnimation = () => {
         // Remove any existing observer
         animationGroups.forEach((group) => {
-          group.onAnimationGroupEndObservable.clear();
+          if (group) {
+            group.onAnimationGroupEndObservable.clear();
+          }
         });
 
         // Get the current animation group and sequence item
         const currentAnimation = animationGroups[currentIndex];
         const currentSequenceItem = sequenceItems[currentIndex];
+        
+        // Skip if animation failed to load
+        if (!currentAnimation) {
+          console.warn(`Skipping failed animation at index ${currentIndex}`);
+          currentIndex++;
+          if (currentIndex < animationGroups.length) {
+            playNextAnimation();
+          } else {
+            // Handle sequence completion
+            this.isPlaying = false;
+
+            // Stop recording if recording was enabled
+            if (isRecording && this.videoRecorder) {
+              try {
+                console.log("Stopping recording...");
+                this.videoRecorder.stopRecording();
+              } catch (error) {
+                console.error("Error stopping recording:", error);
+              }
+            }
+
+            // Re-enable buttons after the animation
+            const playButton = document.getElementById("play-sequence-button");
+            if (playButton) {
+              playButton.disabled = false;
+              playButton.innerHTML = "Play Sequence";
+            }
+
+            const recordButton = document.getElementById("record-sequence-button");
+            if (recordButton) {
+              recordButton.disabled = false;
+              recordButton.innerHTML = "Record Sequence";
+            }
+
+            const clearButton = document.getElementById("clear-sequence-button");
+            if (clearButton) {
+              clearButton.disabled = false;
+            }
+          }
+          return;
+        }
 
         // Apply the sequence item's frame range if available
         if (currentSequenceItem && currentSequenceItem.frameRange) {
