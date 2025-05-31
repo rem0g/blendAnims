@@ -47,6 +47,30 @@ export async function createScene() {
   ground.material = groundMaterial;
   ground.isVisible = true;
 
+  // Enable Babylon.js Inspector
+  scene.debugLayer.show({
+    embedMode: true,
+    overlay: false,
+    showExplorer: true,
+    showInspector: true,
+    handleResize: true,
+    enablePopup: false
+  });
+
+  // Wait for debug layer to be ready then position it on the left
+  setTimeout(() => {
+    const debugLayerElement = document.querySelector("#scene-explorer-host");
+    if (debugLayerElement) {
+      debugLayerElement.style.left = "0";
+      debugLayerElement.style.right = "auto";
+    }
+    const inspectorHost = document.querySelector("#inspector-host");
+    if (inspectorHost) {
+      inspectorHost.style.left = "300px";
+      inspectorHost.style.right = "auto";
+    }
+  }, 1000);
+
   // Return everything just in case
   return { canvas, engine, scene, cameraController, light, ground };
 }

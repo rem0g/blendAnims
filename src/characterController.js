@@ -20,6 +20,9 @@ class CharacterController {
     this.animationGroup = null;
     this.currentAnimationGroup = null;
     this.morphTargetManagers = [];
+    this.eyeLookObserver = null;
+    this.leftEyeLookController = null;
+    this.rightEyeLookController = null;
   }
 
   async init() {
@@ -42,10 +45,6 @@ class CharacterController {
       this.scene
     );
 
-    // Eye blinking does not work yet
-    // const eyeBlinkController = new EyeBlinkController(loadedResults);
-    // eyeBlinkController.createEyeBlinkAnimation(this.scene);
-
     const leftEyeBone = loadedResults.skeletons[0].bones.find(
       (bone) => bone.name === "LeftEye"
     );
@@ -57,13 +56,18 @@ class CharacterController {
       console.error("Left or Right Eye bone not found in the skeleton");
     }
 
-    const lookCtrLeft = new BoneLookController(
+    // Initialize eye blink controller
+    this.eyeBlinkController = new EyeBlinkController(loadedResults, this.scene);
+    this.eyeBlinkController.leftEyeBone = leftEyeBone;
+    this.eyeBlinkController.rightEyeBone = rightEyeBone;
+
+    this.leftEyeLookController = new BoneLookController(
       loadedResults,
       leftEyeBone,
       this.cameraController.camera.position
     );
 
-    const lookCtrRight = new BoneLookController(
+    this.rightEyeLookController = new BoneLookController(
       loadedResults,
       rightEyeBone,
       this.cameraController.camera.position
@@ -170,14 +174,33 @@ class CharacterController {
       // const easingFunction = new BABYLON.BackEase(10);
       // easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEIN);
 
-      // Remove the animation from the hips
+      // Remove the animation from the hips and eye channels
       // console.log("Animation group before removing hips:", myAnimation);
       // myAnimation.targetedAnimations[0].animation.keys = [];
 
+      // Remove eye channel animations by clearing their keys
       myAnimation.targetedAnimations.forEach((targetedAnim) => {
         if (targetedAnim.target !== null && targetedAnim.animation !== null) {
+          // Remove Unreal Take_channel8_0 and Unreal Take_channel9_0 (eye animations)
+                      console.log("Targeted animation:", targetedAnim.target.name, targetedAnim.animation);
+
+          //get list of all targetedAnim
+          if (targetedAnim.target.name === "morphTarget0" || 
+              targetedAnim.target.name === "morphTarget1" ||
+              targetedAnim.target.name === "morphTarget2" ||
+              targetedAnim.target.name === "morphTarget3" ||
+              targetedAnim.target.name === "morphTarget4" ||
+              targetedAnim.target.name === "morphTarget5" ||
+              targetedAnim.target.name === "morphTarget6" ) {
+            console.log(`Clearing eye animation channel: ${targetedAnim.target.name}`);
+
+            // Clear all animation keys to effectively disable the animation
+            targetedAnim.animation._keys.forEach((key) => {
+                          key.value = 0;
+                        });           
+                      }
           // Remove the hips animation
-          if (targetedAnim.target.name === "Hips") {
+          else if (targetedAnim.target.name === "Hips") {
             if (
               targetedAnim.animation.targetProperty === "rotationQuaternion"
             ) {
@@ -534,6 +557,33 @@ class CharacterController {
     }
 
     return animationGroup;
+  }
+  
+  // Toggle eye movement and return the current state
+  toggleEyeMovement() {
+    if (!this.leftEyeLookController || !this.rightEyeLookController) {
+      console.warn("Eye look controllers not initialized");
+      return false;
+    }
+    
+    if (this.eyeLookObserver) {
+      // Disable eye movement
+      this.scene.onBeforeRenderObservable.remove(this.eyeLookObserver);
+      this.eyeLookObserver = null;
+      return false;
+    } else {
+      // Enable eye movement
+      this.eyeLookObserver = this.scene.onBeforeRenderObservable.add(() => {
+        if (this.leftEyeLookController && this.rightEyeLookController) {
+          // Update target to current camera position
+          this.leftEyeLookController.target = this.cameraController.camera.position;
+          this.rightEyeLookController.target = this.cameraController.camera.position;
+          this.leftEyeLookController.update();
+          this.rightEyeLookController.update();
+        }
+      });
+      return true;
+    }
   }
 }
 

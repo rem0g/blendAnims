@@ -257,6 +257,7 @@ class UIController {
     loadSequenceButton.title = "Load sequence from database";
     loadSequenceButton.onclick = () => this.showLoadDialog();
     sequenceControls.appendChild(loadSequenceButton);
+    
     sequenceColumn.appendChild(sequenceControls);
   }
 
@@ -1609,6 +1610,7 @@ class UIController {
       this.showNotification(`Error loading sequence: ${error.message}`, "error");
     }
   }
+  
 }
 
 export default UIController;
