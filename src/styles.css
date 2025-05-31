@@ -478,6 +478,19 @@ h2 {
   background-color: #F57C00;
 }
 
+.mouse-eye-button {
+  background-color: #673AB7;
+}
+
+.mouse-eye-button:hover:not(:disabled) {
+  background-color: #5E35B1;
+}
+
+.mouse-eye-button.active {
+  background-color: #512DA8;
+  box-shadow: 0 0 10px rgba(103, 58, 183, 0.5);
+}
+
 .record-sequence-button {
   background-color: #F44336;
 }
@@ -497,6 +510,98 @@ h2 {
   100% { opacity: 1; }
 }
 
+/* MorphTarget Controls */
+.morph-target-section {
+  border: 1px solid #ddd;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.morph-target-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  background: #ddd;
+  outline: none;
+  border-radius: 3px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 150px;
+}
+
+.morph-target-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.morph-target-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.morph-target-slider:hover::-webkit-slider-thumb {
+  background: #45a049;
+}
+
+.morph-target-slider:hover::-moz-range-thumb {
+  background: #45a049;
+}
+
+/* Eye Rotation Controls */
+.eye-rotation-section {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.eye-rotation-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #ddd;
+  outline: none;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.eye-rotation-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #2196F3;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.eye-rotation-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #2196F3;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.eye-rotation-slider:hover::-webkit-slider-thumb {
+  background: #1976D2;
+}
+
+.eye-rotation-slider:hover::-moz-range-thumb {
+  background: #1976D2;
+}
 
 .small-button {
   width: 30px;

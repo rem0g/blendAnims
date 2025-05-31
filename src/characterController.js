@@ -7,6 +7,8 @@ import {
   Animation,
   RuntimeAnimation,
   BoneLookController,
+  Quaternion,
+  Matrix,
 } from "babylonjs";
 import { availableSigns, availableSignsMap } from "./availableSigns.js";
 import EyeBlinkController from "./eyeBlinkController.js";
@@ -60,6 +62,9 @@ class CharacterController {
     this.eyeBlinkController = new EyeBlinkController(loadedResults, this.scene);
     this.eyeBlinkController.leftEyeBone = leftEyeBone;
     this.eyeBlinkController.rightEyeBone = rightEyeBone;
+    
+    // Initialize mouse eye tracking
+    this.initializeMouseEyeTracking();
 
     this.leftEyeLookController = new BoneLookController(
       loadedResults,
@@ -182,22 +187,23 @@ class CharacterController {
       myAnimation.targetedAnimations.forEach((targetedAnim) => {
         if (targetedAnim.target !== null && targetedAnim.animation !== null) {
           // Remove Unreal Take_channel8_0 and Unreal Take_channel9_0 (eye animations)
-                      console.log("Targeted animation:", targetedAnim.target.name, targetedAnim.animation);
+                      // console.log("Targeted animation:", targetedAnim.target.name, targetedAnim.animation);
 
           //get list of all targetedAnim
-          if (targetedAnim.target.name === "morphTarget0" || 
-              targetedAnim.target.name === "morphTarget1" ||
-              targetedAnim.target.name === "morphTarget2" ||
-              targetedAnim.target.name === "morphTarget3" ||
-              targetedAnim.target.name === "morphTarget4" ||
-              targetedAnim.target.name === "morphTarget5" ||
-              targetedAnim.target.name === "morphTarget6" ) {
-            console.log(`Clearing eye animation channel: ${targetedAnim.target.name}`);
 
+          //morphtarget
+          //0
+                      console.log(targetedAnim.animation.targetProperty);
+
+          if (targetedAnim.target.name === "LeftEye"
+        ) {
+            console.log(`Clearing eye animation channel: ${targetedAnim.target.name}`);
+            // console.log()
             // Clear all animation keys to effectively disable the animation
-            targetedAnim.animation._keys.forEach((key) => {
-                          key.value = 0;
-                        });           
+            console.log(targetedAnim.animation);
+            // targetedAnim.animation.forEach((key) => {
+            //              console.log(key);
+            //             });           
                       }
           // Remove the hips animation
           else if (targetedAnim.target.name === "Hips") {
@@ -559,6 +565,158 @@ class CharacterController {
     return animationGroup;
   }
   
+  // Initialize mouse eye tracking system
+  initializeMouseEyeTracking() {
+    // Get both eye nodes by name from the scene
+    this.leftEye = this.scene.getNodeByName("LeftEye");
+    this.rightEye = this.scene.getNodeByName("RightEye");
+    
+    if (!this.leftEye && !this.rightEye) {
+      console.warn("No eye nodes found in scene for tracking");
+      return;
+    }
+
+    // Ensure we can rotate with quaternions for both eyes
+    if (this.leftEye) {
+      this.leftEye.rotationQuaternion ||= Quaternion.Identity();
+    }
+    if (this.rightEye) {
+      this.rightEye.rotationQuaternion ||= Quaternion.Identity();
+    }
+
+    // Don't start automatically - wait for user to enable via button
+    // this.startMouseEyeTracking();
+  }
+
+  // Start mouse eye tracking
+  startMouseEyeTracking() {
+    if (this.mouseEyeTrackingObserver) {
+      // Already tracking
+      return;
+    }
+
+    // Every frame: make both eyes look at the camera
+    this.mouseEyeTrackingObserver = this.scene.onBeforeRenderObservable.add(() => {
+      if (!this.scene.activeCamera) return;
+      if (!this.leftEye && !this.rightEye) return;
+
+      const camPos = this.scene.activeCamera.globalPosition;
+      
+      // Process left eye
+      if (this.leftEye) {
+        const eyeWorld = this.leftEye.getAbsolutePosition();
+        
+        // World-space direction from eye → camera
+        const dir = camPos.subtract(eyeWorld).normalize();
+        
+        // Convert to the eye's *local* space
+        const invParent = this.leftEye.getWorldMatrix().invert();
+        const localDir = Vector3.TransformNormal(dir, invParent);
+        
+        const yaw = Math.atan2(localDir.x, localDir.z);   // left/right
+        const pitch = Math.asin(-localDir.y);             // up/down
+        
+        // Build a quaternion without clamping (no limits)
+        this.leftEye.rotationQuaternion.copyFrom(
+          Quaternion.FromEulerAngles(pitch, yaw, 0)
+        );
+      }
+      
+      // Process right eye
+      if (this.rightEye) {
+        const eyeWorld = this.rightEye.getAbsolutePosition();
+        
+        // World-space direction from eye → camera
+        const dir = camPos.subtract(eyeWorld).normalize();
+        
+        // Convert to the eye's *local* space
+        const invParent = this.rightEye.getWorldMatrix().invert();
+        const localDir = Vector3.TransformNormal(dir, invParent);
+        
+        const yaw = Math.atan2(localDir.x, localDir.z);   // left/right
+        const pitch = Math.asin(-localDir.y);             // up/down
+        
+        // Build a quaternion without clamping (no limits)
+        this.rightEye.rotationQuaternion.copyFrom(
+          Quaternion.FromEulerAngles(pitch, yaw, 0)
+        );
+      }
+    });
+
+    console.log("Camera eye tracking started");
+  }
+
+  // Stop mouse eye tracking
+  stopMouseEyeTracking() {
+    if (this.mouseEyeTrackingObserver) {
+      this.scene.onBeforeRenderObservable.remove(this.mouseEyeTrackingObserver);
+      this.mouseEyeTrackingObserver = null;
+      
+      // Reset both eyes rotation to neutral
+      if (this.leftEye && this.leftEye.rotationQuaternion) {
+        this.leftEye.rotationQuaternion = Quaternion.Identity();
+      }
+      if (this.rightEye && this.rightEye.rotationQuaternion) {
+        this.rightEye.rotationQuaternion = Quaternion.Identity();
+      }
+      
+      console.log("Camera eye tracking stopped");
+    }
+  }
+  
+  // Toggle mouse eye tracking
+  toggleMouseEyeTracking() {
+    if (this.mouseEyeTrackingObserver) {
+      this.stopMouseEyeTracking();
+      return false;
+    } else {
+      this.startMouseEyeTracking();
+      return true;
+    }
+  }
+  
+  // Manually set eye rotation for both eyes
+  setEyeRotation(x, y, z) {
+    // Get both eye nodes
+    if (!this.leftEye) {
+      this.leftEye = this.scene.getNodeByName("LeftEye");
+      if (this.leftEye) {
+        this.leftEye.rotationQuaternion ||= Quaternion.Identity();
+      }
+    }
+    
+    if (!this.rightEye) {
+      this.rightEye = this.scene.getNodeByName("RightEye");
+      if (this.rightEye) {
+        this.rightEye.rotationQuaternion ||= Quaternion.Identity();
+      }
+    }
+    
+    if (!this.leftEye && !this.rightEye) {
+      console.warn("Neither LeftEye nor RightEye nodes found");
+      return false;
+    }
+    
+    // Convert degrees to radians
+    const xRad = x * (Math.PI / 180);
+    const yRad = y * (Math.PI / 180);
+    const zRad = z * (Math.PI / 180);
+    
+    // Create the rotation quaternion
+    const rotation = Quaternion.FromEulerAngles(xRad, yRad, zRad);
+    
+    // Apply to both eyes
+    if (this.leftEye) {
+      this.leftEye.rotationQuaternion = rotation.clone();
+    }
+    
+    if (this.rightEye) {
+      this.rightEye.rotationQuaternion = rotation.clone();
+    }
+    
+    return true;
+  }
+
   // Toggle eye movement and return the current state
   toggleEyeMovement() {
     if (!this.leftEyeLookController || !this.rightEyeLookController) {

@@ -258,7 +258,112 @@ class UIController {
     loadSequenceButton.onclick = () => this.showLoadDialog();
     sequenceControls.appendChild(loadSequenceButton);
     
+    // Add camera eye tracking button
+    const mouseEyeButton = document.createElement("button");
+    mouseEyeButton.id = "mouse-eye-button";
+    mouseEyeButton.className = "control-button mouse-eye-button";
+    mouseEyeButton.innerHTML = "👁️ Camera Track";
+    mouseEyeButton.title = "Toggle eye tracking to camera";
+    mouseEyeButton.onclick = () => this.toggleMouseEyeTracking();
+    sequenceControls.appendChild(mouseEyeButton);
+    
     sequenceColumn.appendChild(sequenceControls);
+    
+    // Add eye rotation controls after the buttons
+    this.createEyeRotationControls(sequenceColumn);
+  }
+  
+  createEyeRotationControls(sequenceColumn) {
+    // Create eye rotation control section
+    const eyeRotationSection = document.createElement("div");
+    eyeRotationSection.className = "eye-rotation-section";
+    eyeRotationSection.style.marginTop = "15px";
+    eyeRotationSection.style.padding = "10px";
+    eyeRotationSection.style.backgroundColor = "#f9f9f9";
+    eyeRotationSection.style.borderRadius = "8px";
+    eyeRotationSection.style.border = "1px solid #e0e0e0";
+    
+    const eyeRotationTitle = document.createElement("h4");
+    eyeRotationTitle.textContent = "Eyes Rotation Control (Both)";
+    eyeRotationTitle.style.margin = "0 0 10px 0";
+    eyeRotationTitle.style.fontSize = "14px";
+    eyeRotationSection.appendChild(eyeRotationTitle);
+    
+    // Create sliders for X, Y, Z rotation
+    const axes = ['X', 'Y', 'Z'];
+    const sliderValues = { X: 0, Y: 0, Z: 0 };
+    
+    axes.forEach(axis => {
+      const sliderRow = document.createElement("div");
+      sliderRow.style.display = "flex";
+      sliderRow.style.alignItems = "center";
+      sliderRow.style.marginBottom = "8px";
+      sliderRow.style.gap = "8px";
+      
+      const label = document.createElement("label");
+      label.textContent = `${axis}:`;
+      label.style.fontWeight = "bold";
+      label.style.width = "20px";
+      label.style.fontSize = "12px";
+      sliderRow.appendChild(label);
+      
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.min = "-180";
+      slider.max = "180";
+      slider.step = "1";
+      slider.value = "0";
+      slider.id = `eye-rotation-${axis.toLowerCase()}`;
+      slider.className = "eye-rotation-slider";
+      slider.style.flex = "1";
+      slider.style.minWidth = "100px";
+      
+      const valueDisplay = document.createElement("span");
+      valueDisplay.id = `eye-rotation-${axis.toLowerCase()}-value`;
+      valueDisplay.textContent = "0°";
+      valueDisplay.style.fontWeight = "bold";
+      valueDisplay.style.minWidth = "40px";
+      valueDisplay.style.textAlign = "right";
+      valueDisplay.style.fontSize = "11px";
+      valueDisplay.style.backgroundColor = "#e0e0e0";
+      valueDisplay.style.padding = "2px 4px";
+      valueDisplay.style.borderRadius = "3px";
+      
+      // Add real-time rotation update
+      slider.oninput = () => {
+        const value = parseInt(slider.value);
+        valueDisplay.textContent = `${value}°`;
+        sliderValues[axis] = value;
+        this.updateEyeRotation(sliderValues.X, sliderValues.Y, sliderValues.Z);
+      };
+      
+      sliderRow.appendChild(slider);
+      sliderRow.appendChild(valueDisplay);
+      eyeRotationSection.appendChild(sliderRow);
+    });
+    
+    // Reset button
+    const resetButton = document.createElement("button");
+    resetButton.className = "control-button";
+    resetButton.textContent = "Reset";
+    resetButton.style.marginTop = "8px";
+    resetButton.style.fontSize = "12px";
+    resetButton.style.padding = "4px 12px";
+    resetButton.onclick = () => {
+      axes.forEach(axis => {
+        const slider = document.getElementById(`eye-rotation-${axis.toLowerCase()}`);
+        const valueDisplay = document.getElementById(`eye-rotation-${axis.toLowerCase()}-value`);
+        if (slider && valueDisplay) {
+          slider.value = "0";
+          valueDisplay.textContent = "0°";
+          sliderValues[axis] = 0;
+        }
+      });
+      this.updateEyeRotation(0, 0, 0);
+    };
+    eyeRotationSection.appendChild(resetButton);
+    
+    sequenceColumn.appendChild(eyeRotationSection);
   }
 
   createSequenceDropArea(sequenceColumn) {
@@ -1611,6 +1716,52 @@ class UIController {
     }
   }
   
+  // Toggle mouse eye tracking
+  toggleMouseEyeTracking() {
+    try {
+      if (!this.characterController) {
+        this.showNotification("Character controller not initialized", "error");
+        return;
+      }
+      
+      // Toggle the mouse eye tracking
+      const isTracking = this.characterController.toggleMouseEyeTracking();
+      
+      // Update button appearance
+      const button = document.getElementById("mouse-eye-button");
+      if (button) {
+        if (isTracking) {
+          button.classList.add("active");
+          button.innerHTML = "👁️ Camera Track (ON)";
+        } else {
+          button.classList.remove("active");
+          button.innerHTML = "👁️ Camera Track";
+        }
+      }
+      
+      this.showNotification(
+        isTracking ? "Camera eye tracking enabled" : "Camera eye tracking disabled", 
+        "success"
+      );
+      
+    } catch (error) {
+      console.error("Error toggling mouse eye tracking:", error);
+      this.showNotification(`Error toggling mouse eye tracking: ${error.message}`, "error");
+    }
+  }
+  
+  // Update eye rotation
+  updateEyeRotation(x, y, z) {
+    if (!this.characterController) {
+      console.warn("Character controller not initialized");
+      return;
+    }
+    
+    const success = this.characterController.setEyeRotation(x, y, z);
+    if (!success) {
+      console.warn("Failed to set eye rotation");
+    }
+  }
 }
 
 export default UIController;

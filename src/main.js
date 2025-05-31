@@ -59,6 +59,9 @@ BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (loader) {
     isPlaying
   );
   uiController.init();
+  
+  // Set UI controller reference in animation controller
+  animationController.uiController = uiController;
 
   // Load an initial animation as an example
   // await characterController.loadAnimation('HALLO');

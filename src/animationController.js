@@ -29,6 +29,11 @@ class AnimationController {
           signItem.classList.add("playing");
         }
         await this.characterController.playAnimation(signName);
+        
+        // Update morphTarget dropdown if UI controller is available
+        if (this.uiController && this.uiController.updateMorphTargetDropdown) {
+          this.uiController.updateMorphTargetDropdown();
+        }
       } catch (error) {
         console.error(`Error loading animation for ${signName}:`, error);
       } finally {
@@ -102,6 +107,11 @@ class AnimationController {
       if (!animationGroups || animationGroups.length == 0) {
         console.warn("No animation groups loaded for blending");
         return;
+      }
+      
+      // Update morphTarget dropdown after loading animations
+      if (this.uiController && this.uiController.updateMorphTargetDropdown) {
+        this.uiController.updateMorphTargetDropdown();
       }
 
       let currentIndex = 0;
