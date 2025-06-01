@@ -176,17 +176,15 @@ class AnimationController {
         }
 
         if (blending) {
-          // this.scene.animationPropertiesOverride =
-          //   new BABYLON.AnimationPropertiesOverride();
-          // this.scene.animationPropertiesOverride.enableBlending = true;
-          // this.scene.animationPropertiesOverride.blendingSpeed = 0.05;
-
+          // Get the blending speed for this specific sequence item
+          const blendingSpeed = currentSequenceItem.blendingSpeed || 0.05;
+          
           // Enable blending for all targeted animations
           currentAnimation.targetedAnimations.forEach((targetedAnim) => {
             const anim = targetedAnim.animation;
             anim.enableBlending = true;
-            // max blending speed 0.13, min 0.02
-            anim.blendingSpeed = 0.05; // Set blending speed
+            // max blending speed 0.13, min 0.01
+            anim.blendingSpeed = blendingSpeed; // Use per-sign blending speed
           });
         }
 

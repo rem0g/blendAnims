@@ -5,6 +5,7 @@ import {
   SceneLoader,
   ImportAnimationsAsync,
   Animation,
+  AnimationGroup,
   RuntimeAnimation,
   BoneLookController,
   Quaternion,
@@ -104,21 +105,29 @@ class CharacterController {
   // Load a single animation
   async loadAnimation(signName, shouldClone = false, apiSign = null) {
     try {
-      // Get the sign file from the availableSigns array or use API sign
-      let sign = apiSign || availableSigns.find((sign) => sign.name === signName);
-
-      if (!sign) {
-        console.error(`Sign not found: ${signName}`, `apiSign:`, apiSign);
-        console.error(`Available signs:`, availableSigns.map(s => s.name));
-        return null;
-      }
-
       // Check if animation already exists
       const existingGroup = this.scene.animationGroups.find(
         (group) => group.name === signName
       );
       
       if (existingGroup) {
+        // Check if this is a generated animation (like a hold animation)
+        if (signName.includes('_hold_')) {
+          // This is a generated static animation, return it directly
+          if (shouldClone) {
+            console.log(`Cloning existing generated animation: ${signName}`);
+            const clonedGroup = existingGroup.clone(`${signName}_${Date.now()}`);
+            clonedGroup.name = signName;
+            clonedGroup.onAnimationGroupEndObservable.clear();
+            return clonedGroup;
+          } else {
+            console.log(`Returning existing generated animation: ${signName}`);
+            existingGroup.onAnimationGroupEndObservable.clear();
+            return existingGroup;
+          }
+        }
+        
+        // Regular existing animation
         if (shouldClone) {
           console.log(`Cloning existing animation: ${signName}`);
           // Clone the animation with a unique name including timestamp
@@ -131,6 +140,15 @@ class CharacterController {
           existingGroup.onAnimationGroupEndObservable.clear();
           return existingGroup;
         }
+      }
+      
+      // Get the sign file from the availableSigns array or use API sign
+      let sign = apiSign || availableSigns.find((sign) => sign.name === signName);
+
+      if (!sign) {
+        console.error(`Sign not found: ${signName}`, `apiSign:`, apiSign);
+        console.error(`Available signs:`, availableSigns.map(s => s.name));
+        return null;
       }
 
       const signFile = sign.file;
@@ -195,15 +213,16 @@ class CharacterController {
           //0
                       console.log(targetedAnim.animation.targetProperty);
 
-          if (targetedAnim.target.name === "LeftEye"
+          if (targetedAnim.target.name === "LeftEye" || targetedAnim.target.name === "RightEye"
         ) {
             console.log(`Clearing eye animation channel: ${targetedAnim.target.name}`);
             // console.log()
             // Clear all animation keys to effectively disable the animation
             console.log(targetedAnim.animation);
-            // targetedAnim.animation.forEach((key) => {
-            //              console.log(key);
-            //             });           
+         
+            targetedAnim.animation._keys.forEach((key) => {
+              console.log("Clearing key:", key);
+                        });           
                       }
           // Remove the hips animation
           else if (targetedAnim.target.name === "Hips") {
@@ -742,6 +761,138 @@ class CharacterController {
       });
       return true;
     }
+  }
+
+  // Create a static animation from a single frame
+  async createStaticFrameAnimation(sourceAnimationGroup, frameNumber, newName, duration = 10) {
+    try {
+      console.log(`Creating static animation from frame ${frameNumber} of ${sourceAnimationGroup.name}`);
+      
+      // Create a new animation group
+      const staticAnimationGroup = new AnimationGroup(newName, this.scene);
+      
+      // Get the frame data for each targeted animation at the specified frame
+      sourceAnimationGroup.targetedAnimations.forEach((targetedAnim) => {
+        const animation = targetedAnim.animation;
+        const target = targetedAnim.target;
+        
+        // Get the value at the specified frame
+        const frameValue = this.getAnimationValueAtFrame(animation, frameNumber);
+        if (frameValue === null) {
+          console.warn(`No value found at frame ${frameNumber} for ${animation.targetProperty}`);
+          return;
+        }
+        
+        // Create a new animation with static keys
+        const staticAnimation = new Animation(
+          `${newName}_${animation.targetProperty}`,
+          animation.targetProperty,
+          animation.framePerSecond,
+          animation.dataType,
+          animation.loopMode
+        );
+        
+        // Create keys for the static animation
+        const keys = [];
+        for (let i = 0; i <= duration; i++) {
+          keys.push({
+            frame: i,
+            value: frameValue
+          });
+        }
+        
+        staticAnimation.setKeys(keys);
+        
+        // Enable blending for smooth transitions
+        staticAnimation.enableBlending = true;
+        staticAnimation.blendingSpeed = 0.01;
+        
+        // Add to the static animation group
+        staticAnimationGroup.addTargetedAnimation(staticAnimation, target);
+      });
+      
+      // Normalize the animation group
+      staticAnimationGroup.normalize(0, duration);
+      
+      console.log(`Created static animation group: ${newName} with ${staticAnimationGroup.targetedAnimations.length} animations`);
+      
+      return staticAnimationGroup;
+      
+    } catch (error) {
+      console.error("Error creating static frame animation:", error);
+      return null;
+    }
+  }
+  
+  // Helper method to get animation value at a specific frame
+  getAnimationValueAtFrame(animation, frame) {
+    const keys = animation.getKeys();
+    
+    // Find the exact key or interpolate between keys
+    for (let i = 0; i < keys.length; i++) {
+      if (keys[i].frame === frame) {
+        // Clone the value to avoid reference issues
+        return this.cloneValue(keys[i].value);
+      } else if (i > 0 && keys[i-1].frame < frame && keys[i].frame > frame) {
+        // Interpolate between two keys
+        const ratio = (frame - keys[i-1].frame) / (keys[i].frame - keys[i-1].frame);
+        return this.interpolateValues(keys[i-1].value, keys[i].value, ratio, animation.dataType);
+      }
+    }
+    
+    // If frame is after the last key, return the last value
+    if (keys.length > 0 && frame >= keys[keys.length - 1].frame) {
+      return this.cloneValue(keys[keys.length - 1].value);
+    }
+    
+    return null;
+  }
+  
+  // Clone a value based on its type
+  cloneValue(value) {
+    if (value === null || value === undefined) return value;
+    
+    // Handle Babylon.js types
+    if (value.clone) {
+      return value.clone();
+    }
+    
+    // Handle numbers
+    if (typeof value === 'number') {
+      return value;
+    }
+    
+    // Handle objects (shallow clone)
+    if (typeof value === 'object') {
+      return { ...value };
+    }
+    
+    return value;
+  }
+  
+  // Interpolate between two values
+  interpolateValues(value1, value2, ratio, dataType) {
+    // Handle numbers
+    if (typeof value1 === 'number' && typeof value2 === 'number') {
+      return value1 + (value2 - value1) * ratio;
+    }
+    
+    // Handle Vector3
+    if (value1.x !== undefined && value1.y !== undefined && value1.z !== undefined) {
+      return new Vector3(
+        value1.x + (value2.x - value1.x) * ratio,
+        value1.y + (value2.y - value1.y) * ratio,
+        value1.z + (value2.z - value1.z) * ratio
+      );
+    }
+    
+    // Handle Quaternion
+    if (value1.x !== undefined && value1.y !== undefined && value1.z !== undefined && value1.w !== undefined) {
+      return Quaternion.Slerp(value1, value2, ratio);
+    }
+    
+    // Default: return the first value
+    return this.cloneValue(value1);
   }
 }
 

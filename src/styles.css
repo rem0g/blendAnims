@@ -366,6 +366,59 @@ h2 {
   color: #666;
 }
 
+.blending-speed-control {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.blending-label {
+  color: #666;
+  font-weight: bold;
+}
+
+.blending-speed-slider {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ddd;
+  outline: none;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.blending-speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #2196F3;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.blending-speed-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #2196F3;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.blending-value {
+  background: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+  min-width: 35px;
+  text-align: center;
+}
+
 .sequence-item-controls {
   display: flex;
   gap: 5px;
@@ -502,6 +555,14 @@ h2 {
 .record-sequence-button.active {
   background-color: #D32F2F;
   animation: pulse 1.5s infinite;
+}
+
+.clone-last-frame-button {
+  background-color: #9C27B0;
+}
+
+.clone-last-frame-button:hover:not(:disabled) {
+  background-color: #7B1FA2;
 }
 
 @keyframes pulse {
@@ -641,12 +702,30 @@ h2 {
   background-color: #45a049;
 }
 
+.clone-button {
+  background-color: #00BCD4;
+  font-weight: bold;
+}
+
+.clone-button:hover {
+  background-color: #00ACC1;
+}
+
 .remove-button {
   background-color: #F44336;
 }
 
 .remove-button:hover {
   background-color: #D32F2F;
+}
+
+.delete-button {
+  background-color: #FF5722;
+  font-size: 14px;
+}
+
+.delete-button:hover {
+  background-color: #E64A19;
 }
 
 /* Move up/down buttons */

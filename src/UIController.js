@@ -995,6 +995,11 @@ class UIController {
       if (loadButton) {
         loadButton.disabled = false;
       }
+      // Mouse eye button should always be enabled
+      const mouseEyeButton = document.getElementById("mouse-eye-button");
+      if (mouseEyeButton) {
+        mouseEyeButton.disabled = false;
+      }
       return;
     }
 
@@ -1033,6 +1038,42 @@ class UIController {
       // Use the item's own frame range instead of the global one
       frameSpan.textContent = `Frames: ${item.frameRange.start} - ${item.frameRange.end}`;
       signInfo.appendChild(frameSpan);
+      
+      // Blending speed control
+      const blendingControl = document.createElement("div");
+      blendingControl.className = "blending-speed-control";
+      
+      const blendingLabel = document.createElement("span");
+      blendingLabel.className = "blending-label";
+      blendingLabel.textContent = "Blend: ";
+      blendingControl.appendChild(blendingLabel);
+      
+      const blendingSlider = document.createElement("input");
+      blendingSlider.type = "range";
+      blendingSlider.className = "blending-speed-slider";
+      blendingSlider.min = "0.01";
+      blendingSlider.max = "0.13";
+      blendingSlider.step = "0.01";
+      blendingSlider.value = item.blendingSpeed || "0.05";
+      blendingSlider.id = `blending-slider-${item.id}`;
+      
+      const blendingValue = document.createElement("span");
+      blendingValue.className = "blending-value";
+      blendingValue.textContent = blendingSlider.value;
+      blendingValue.id = `blending-value-${item.id}`;
+      
+      blendingSlider.oninput = (e) => {
+        const value = parseFloat(e.target.value);
+        blendingValue.textContent = value.toFixed(2);
+        // Update the item's blending speed
+        item.blendingSpeed = value;
+        // Trigger autosave
+        this.autosave();
+      };
+      
+      blendingControl.appendChild(blendingSlider);
+      blendingControl.appendChild(blendingValue);
+      signInfo.appendChild(blendingControl);
 
       sequenceItem.appendChild(signInfo);
 
@@ -1114,6 +1155,14 @@ class UIController {
       moveDownButton.disabled = index === this.sequenceItems.length - 1; // Disable if last item
       moveDownButton.onclick = () => this.moveSequenceItemDown(item.id);
       controls.appendChild(moveDownButton);
+
+      // Clone button
+      const cloneButton = document.createElement("button");
+      cloneButton.className = "clone-button small-button";
+      cloneButton.innerHTML = "⎘";
+      cloneButton.title = "Clone last frame as static hold";
+      cloneButton.onclick = () => this.cloneLastFrameOfSign(item);
+      controls.appendChild(cloneButton);
 
       // Remove button
       const removeButton = document.createElement("button");
@@ -1227,15 +1276,21 @@ class UIController {
     // Create a deep clone of the sign to avoid modifying the original
     const clonedSign = { ...sign };
     
-    // Copy the frame values from availableSignsMap or use defaults for API signs
-    if (sign.isApi) {
-      // For API signs, use default frame values
-      clonedSign.start = 0;
-      clonedSign.end = null; // Will be determined after loading
+    // Copy the frame values from availableSignsMap or use defaults for API/generated signs
+    if (sign.isApi || sign.isGenerated) {
+      // For API signs and generated signs, use the provided values or defaults
+      clonedSign.start = sign.start || 0;
+      clonedSign.end = sign.end || null;
     } else {
       const frameData = availableSignsMap[sign.name];
-      clonedSign.start = frameData.start;
-      clonedSign.end = frameData.end;
+      if (frameData) {
+        clonedSign.start = frameData.start;
+        clonedSign.end = frameData.end;
+      } else {
+        // Fallback if not in map
+        clonedSign.start = sign.start || 0;
+        clonedSign.end = sign.end || null;
+      }
     }
     
     // Count how many times this sign appears in the sequence already
@@ -1251,7 +1306,8 @@ class UIController {
       frameRange: {
         start: clonedSign.start,
         end: clonedSign.end
-      }
+      },
+      blendingSpeed: 0.05 // Default blending speed
     });
 
     // Update the UI
@@ -1266,15 +1322,21 @@ class UIController {
     // Create a deep clone of the sign to avoid modifying the original
     const clonedSign = { ...sign };
     
-    // Copy the frame values from availableSignsMap or use defaults for API signs
-    if (sign.isApi) {
-      // For API signs, use default frame values
-      clonedSign.start = 0;
-      clonedSign.end = null;
+    // Copy the frame values from availableSignsMap or use defaults for API/generated signs
+    if (sign.isApi || sign.isGenerated) {
+      // For API signs and generated signs, use the provided values or defaults
+      clonedSign.start = sign.start || 0;
+      clonedSign.end = sign.end || null;
     } else {
       const frameData = availableSignsMap[sign.name];
-      clonedSign.start = frameData.start;
-      clonedSign.end = frameData.end;
+      if (frameData) {
+        clonedSign.start = frameData.start;
+        clonedSign.end = frameData.end;
+      } else {
+        // Fallback if not in map
+        clonedSign.start = sign.start || 0;
+        clonedSign.end = sign.end || null;
+      }
     }
     
     // Count how many times this sign appears in the sequence already
@@ -1290,7 +1352,8 @@ class UIController {
       frameRange: {
         start: clonedSign.start,
         end: clonedSign.end
-      }
+      },
+      blendingSpeed: 0.05 // Default blending speed
     });
 
     // Update the UI
@@ -1700,7 +1763,8 @@ class UIController {
             frameRange: {
               start: item.frame_start,
               end: item.frame_end
-            }
+            },
+            blendingSpeed: item.blending_speed || 0.05
           });
         } else {
           console.warn(`Sign "${item.sign_name}" not found in library`);
@@ -1760,6 +1824,77 @@ class UIController {
     const success = this.characterController.setEyeRotation(x, y, z);
     if (!success) {
       console.warn("Failed to set eye rotation");
+    }
+  }
+
+  // Clone the last frame of a specific sign to create a static hold animation
+  async cloneLastFrameOfSign(sequenceItem) {
+    const sign = sequenceItem.sign;
+    const frameRange = sequenceItem.frameRange;
+    
+    try {
+      // Load the animation to get the actual frame data
+      let apiSign = null;
+      if (sign.isApi) {
+        apiSign = {
+          name: sign.name,
+          file: sign.file,
+          isApi: true,
+          originalUrl: sign.originalUrl,
+          filename: sign.filename
+        };
+      }
+      
+      const animationGroup = await this.characterController.loadAnimation(sign.name, false, apiSign);
+      if (!animationGroup) {
+        this.showNotification("Failed to load animation for cloning", "error");
+        return;
+      }
+      
+      // Get the last frame number
+      const lastFrame = frameRange.end || animationGroup.to;
+      
+      // Create a unique name for the hold animation
+      const holdName = `${sign.name}_hold_${Date.now()}`;
+      
+      // Create a static animation from the last frame
+      const staticAnimation = await this.characterController.createStaticFrameAnimation(
+        animationGroup,
+        lastFrame,
+        holdName,
+        10 // Duration in frames
+      );
+      
+      if (!staticAnimation) {
+        this.showNotification("Failed to create static animation", "error");
+        return;
+      }
+      
+      // Find the position of the current item
+      const currentIndex = this.sequenceItems.findIndex(item => item.id === sequenceItem.id);
+      
+      // Create the static sign object
+      const staticSign = {
+        name: holdName,
+        file: null, // This is a generated animation
+        start: 0,
+        end: 10,
+        isGenerated: true,
+        originalSign: sign.name
+      };
+      
+      // Insert the static animation right after the current item
+      if (currentIndex !== -1) {
+        this.insertToSequence(staticSign, currentIndex + 1);
+      } else {
+        this.addToSequence(staticSign);
+      }
+      
+      this.showNotification(`Added static hold for "${sign.name}"`, "success");
+      
+    } catch (error) {
+      console.error("Error cloning last frame:", error);
+      this.showNotification("Error cloning last frame", "error");
     }
   }
 }
