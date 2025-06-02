@@ -111,34 +111,42 @@ class CharacterController {
       );
       
       if (existingGroup) {
-        // Check if this is a generated animation (like a hold animation)
-        if (signName.includes('_hold_')) {
-          // This is a generated static animation, return it directly
+        // If we're not cloning and the animation was retargeted, we need to dispose and reload
+        // to avoid playing the same instance that might be stuck
+        if (!shouldClone && !signName.includes('_hold_')) {
+          console.log(`Disposing existing retargeted animation: ${signName}`);
+          existingGroup.dispose();
+          // Continue to load a fresh copy below
+        } else {
+          // Check if this is a generated animation (like a hold animation)
+          if (signName.includes('_hold_')) {
+            // This is a generated static animation, return it directly
+            if (shouldClone) {
+              console.log(`Cloning existing generated animation: ${signName}`);
+              const clonedGroup = existingGroup.clone(`${signName}_${Date.now()}`);
+              clonedGroup.name = signName;
+              clonedGroup.onAnimationGroupEndObservable.clear();
+              return clonedGroup;
+            } else {
+              console.log(`Returning existing generated animation: ${signName}`);
+              existingGroup.onAnimationGroupEndObservable.clear();
+              return existingGroup;
+            }
+          }
+          
+          // Regular existing animation
           if (shouldClone) {
-            console.log(`Cloning existing generated animation: ${signName}`);
+            console.log(`Cloning existing animation: ${signName}`);
+            // Clone the animation with a unique name including timestamp
             const clonedGroup = existingGroup.clone(`${signName}_${Date.now()}`);
-            clonedGroup.name = signName;
+            clonedGroup.name = signName; // Keep original name for reference
             clonedGroup.onAnimationGroupEndObservable.clear();
             return clonedGroup;
           } else {
-            console.log(`Returning existing generated animation: ${signName}`);
+            console.log(`Animation group already loaded: ${signName}`);
             existingGroup.onAnimationGroupEndObservable.clear();
             return existingGroup;
           }
-        }
-        
-        // Regular existing animation
-        if (shouldClone) {
-          console.log(`Cloning existing animation: ${signName}`);
-          // Clone the animation with a unique name including timestamp
-          const clonedGroup = existingGroup.clone(`${signName}_${Date.now()}`);
-          clonedGroup.name = signName; // Keep original name for reference
-          clonedGroup.onAnimationGroupEndObservable.clear();
-          return clonedGroup;
-        } else {
-          console.log(`Animation group already loaded: ${signName}`);
-          existingGroup.onAnimationGroupEndObservable.clear();
-          return existingGroup;
         }
       }
       
@@ -170,10 +178,27 @@ class CharacterController {
       );
 
       // Find the animationgroup that was just loaded
-      let myAnimation = result.animationGroups.find(
-        (x, i) => x.name === "Unreal Take" && i != 0
-      );
-      myAnimation = this.retargetAnimWithBlendshapes(this.character, myAnimation);
+      // Get the last "Unreal Take" which should be the one we just loaded
+      let myAnimation = null;
+      for (let i = result.animationGroups.length - 1; i >= 0; i--) {
+        if (result.animationGroups[i].name === "Unreal Take") {
+          myAnimation = result.animationGroups[i];
+          break;
+        }
+      }
+      
+      if (!myAnimation) {
+        console.error("Could not find 'Unreal Take' animation in loaded file");
+        return null;
+      }
+      
+      // Pass the signName to retargetAnimWithBlendshapes to preserve it
+      const retargetedAnimation = this.retargetAnimWithBlendshapes(this.character, myAnimation, signName);
+      
+      // Dispose the original animation to avoid conflicts
+      myAnimation.dispose();
+      
+      myAnimation = retargetedAnimation;
 
       console.log("myAnimation:", myAnimation);
 
@@ -252,8 +277,8 @@ class CharacterController {
         }
       });
 
-      // Rename the animationgroup to the signName
-      myAnimation.name = signName;
+      // The name is already set in retargetAnimWithBlendshapes
+      // myAnimation.name = signName;
 
       // Blendshape van ogen uitzetten
       // console.log("Disabling eye blendshapes f/or animation:", targetedAnim.animation);
@@ -336,7 +361,7 @@ class CharacterController {
     // Generate a unique clone name with timestamp to avoid conflicts
     const uniqueCloneName = `${cloneName}_${Date.now()}`;
 
-    return animGroup.clone(uniqueCloneName, (target) => {
+    const clonedAnimGroup = animGroup.clone(uniqueCloneName, (target) => {
       if (!target) {
         console.log("No target.");
         return null;
@@ -377,6 +402,11 @@ class CharacterController {
 
       return mtm;
     });
+    
+    // Set the name to the original sign name so it can be found later
+    clonedAnimGroup.name = cloneName;
+    
+    return clonedAnimGroup;
   }
 
   // Helper function to get the morph target index, since babylon only provides
@@ -461,6 +491,9 @@ class CharacterController {
               .join(", ")}`
           );
 
+          // Stop all animations and reset the character
+          this.stopAllAnimations();
+          
           // Stop any currently playing animation
           if (this.currentAnimationGroup) {
             this.currentAnimationGroup.stop();
@@ -519,6 +552,9 @@ class CharacterController {
   async playAnimationGroup(animationGroup) {
     return new Promise((resolve, reject) => {
       try {
+        // Stop all animations and reset the character
+        this.stopAllAnimations();
+        
         // Stop any currently playing animation
         if (this.currentAnimationGroup) {
           this.currentAnimationGroup.stop();
@@ -569,6 +605,25 @@ class CharacterController {
     rootMesh.rotation = new Vector3(0, Math.PI, 0);
 
     return rootMesh;
+  }
+  
+  // Stop all animations and reset character to default pose
+  stopAllAnimations() {
+    // Stop all animation groups in the scene
+    this.scene.animationGroups.forEach(group => {
+      group.stop();
+      group.reset();
+    });
+    
+    // Reset all morph targets to 0
+    this.morphTargetManagers.forEach(manager => {
+      for (let i = 0; i < manager.numTargets; i++) {
+        const target = manager.getTarget(i);
+        target.influence = 0;
+      }
+    });
+    
+    console.log("Stopped all animations and reset morph targets");
   }
 
   getAnimationGroup(signName) {
