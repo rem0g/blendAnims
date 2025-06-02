@@ -173,7 +173,7 @@ class CharacterController {
       let myAnimation = result.animationGroups.find(
         (x, i) => x.name === "Unreal Take" && i != 0
       );
-      // myAnimation = this.retargetAnimWithBlendshapes(this.character, myAnimation);
+      myAnimation = this.retargetAnimWithBlendshapes(this.character, myAnimation);
 
       console.log("myAnimation:", myAnimation);
 
