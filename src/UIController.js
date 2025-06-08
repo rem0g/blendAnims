@@ -3,6 +3,7 @@ import FrameEditor from "./frameEditor";
 import { availableSignsMap } from "./availableSigns";
 import SequencerAPI from "./sequencerAPI";
 import SignCollectAPI from "./signCollectAPI";
+import TextToSignModal from "./textToSignModal";
 
 // Class to handle UI elements and interactions, such as drag and drop
 class UIController {
@@ -52,12 +53,18 @@ class UIController {
     // Autosave timer
     this.autosaveTimer = null;
     this.autosaveEnabled = true;
+    
+    // Initialize text to sign modal
+    this.textToSignModal = null;
   }
 
   init() {
     // Create UI
     this.animationController.init(this.sequenceItems);
     this.createDragDropUI();
+    
+    // Initialize text to sign modal after UI is created
+    this.textToSignModal = new TextToSignModal(this);
   }
 
   createDragDropUI() {
@@ -266,6 +273,15 @@ class UIController {
     mouseEyeButton.title = "Toggle eye tracking to camera";
     mouseEyeButton.onclick = () => this.toggleMouseEyeTracking();
     sequenceControls.appendChild(mouseEyeButton);
+    
+    // Add text to sign button
+    const textToSignButton = document.createElement("button");
+    textToSignButton.id = "text-to-sign-button";
+    textToSignButton.className = "control-button text-to-sign-button";
+    textToSignButton.innerHTML = "🔤 Text to Signs";
+    textToSignButton.title = "Convert Dutch text to sign language sequence";
+    textToSignButton.onclick = () => this.openTextToSignModal();
+    sequenceControls.appendChild(textToSignButton);
     
     sequenceColumn.appendChild(sequenceControls);
     
@@ -999,6 +1015,11 @@ class UIController {
       const mouseEyeButton = document.getElementById("mouse-eye-button");
       if (mouseEyeButton) {
         mouseEyeButton.disabled = false;
+      }
+      // Text to sign button should always be enabled
+      const textToSignButton = document.getElementById("text-to-sign-button");
+      if (textToSignButton) {
+        textToSignButton.disabled = false;
       }
       return;
     }
@@ -1895,6 +1916,15 @@ class UIController {
     } catch (error) {
       console.error("Error cloning last frame:", error);
       this.showNotification("Error cloning last frame", "error");
+    }
+  }
+  
+  // Open text to sign modal
+  openTextToSignModal() {
+    if (this.textToSignModal) {
+      this.textToSignModal.open();
+    } else {
+      console.error("Text to sign modal not initialized");
     }
   }
 }

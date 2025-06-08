@@ -29,6 +29,31 @@
   <body>
     <canvas id="renderCanvas" touch-action="none"></canvas>
 
+    <!-- Text to Sign Modal -->
+    <div id="textToSignModal" class="modal">
+      <div class="modal-content">
+        <h2>Convert Text to Sign Language</h2>
+        
+        <!-- Input Section -->
+        <div class="input-section">
+          <label for="dutchTextInput">Enter Dutch text:</label>
+          <textarea id="dutchTextInput" placeholder="Type your sentence here..."></textarea>
+          <button id="convertButton">Convert to Signs</button>
+        </div>
+        
+        <!-- Results Section (hidden initially) -->
+        <div id="resultsSection" style="display: none;">
+          <h3>Select animations for each word:</h3>
+          <div id="wordSelections"></div>
+          <button id="addToSequencer">Add to Sequencer</button>
+        </div>
+        
+        <!-- Loading/Error States -->
+        <div id="loadingIndicator" style="display: none;">Processing...</div>
+        <div id="errorMessage" style="display: none;"></div>
+      </div>
+    </div>
+
     <script src="src/main.js" type="module"></script>
      
   </body>
