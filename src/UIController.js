@@ -971,7 +971,18 @@ class UIController {
     editButton.title = `Edit frames for "${sign.name}"`;
     editButton.onclick = async (e) => {
       e.stopPropagation();
-      const animationGroup = await this.characterController.loadAnimation(sign.name);
+      // Prepare API sign if needed
+      let apiSign = null;
+      if (sign.isApi) {
+        apiSign = {
+          name: sign.name,
+          file: sign.file,
+          isApi: true,
+          originalUrl: sign.originalUrl,
+          filename: sign.filename
+        };
+      }
+      const animationGroup = await this.characterController.loadAnimation(sign.name, false, apiSign);
       this.showFrameEditor(sign, frameInfo, animationGroup);
     };
     controls.appendChild(editButton);
@@ -1271,12 +1282,20 @@ class UIController {
     
     // Only handle adding from library (reordering now uses buttons)
     {
-      // Handle adding new sign from library
-      const signName = dragType; // The drag type IS the sign name for library items
-      if (!signName || signName === '') return;
-
-      const sign = this.availableSigns.find((s) => s.name === signName);
-      if (!sign) return;
+      // Check if this is API sign data (JSON format)
+      let sign = null;
+      try {
+        // Try to parse as JSON first (API signs)
+        sign = JSON.parse(dragType);
+        console.log('Parsed API sign:', sign);
+      } catch {
+        // If parsing fails, treat as library sign name
+        const signName = dragType;
+        if (!signName || signName === '') return;
+        
+        sign = this.availableSigns.find((s) => s.name === signName);
+        if (!sign) return;
+      }
 
       // Use the tracked drop position
       if (this.dropPosition !== null) {

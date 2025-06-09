@@ -1,13 +1,132 @@
-# Senses to Gloss API Integration Plan
+# AnimDB API Documentation
 
 ## Overview
 
-This document outlines how to integrate the `sensesToGlos.php` API into your client application to convert Dutch text into sign language animations using a modal interface.
+This document provides comprehensive documentation for all AnimDB API endpoints, including implementation examples for client applications.
 
-## API Endpoint
+## API Endpoints
+
+### 1. Update Animation Timing
+
+**URL**: `https://signcollect.nl/animDB/updateAnims.php`  
+**Method**: POST or PUT  
+**Description**: Updates timing information (startTime and endTime) for animation files
+
+**Important Frame Rate Conversion**:
+- The animation player uses 60fps internally for smooth playback
+- The API expects frame numbers at 24fps
+- When saving frame edits, convert from 60fps to 24fps: `frame24 = Math.round((frame60 / 60) * 24)`
+- When loading from API, convert from 24fps to 60fps: `frame60 = Math.round((frame24 / 24) * 60)`
+
+**Request Body**:
+```json
+{
+  "filename": "HUIS-A.glb",      // Required: animation filename
+  "startTime": 10,               // Optional: start frame at 24fps (can be null)
+  "endTime": 55                  // Optional: end frame at 24fps (can be null)
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Animation timing updated successfully",
+    "filename": "HUIS-A.glb",
+    "glos": "HUIS-A",
+    "timing": {
+      "startTime": 0.5,
+      "endTime": 2.3
+    },
+    "previous_timing": {
+      "startTime": null,
+      "endTime": null
+    },
+    "updated": true
+  }
+}
+```
+
+**Error Responses**:
+- 400: Invalid input (missing filename, invalid timing values)
+- 404: Animation file not found
+- 405: Invalid HTTP method
+- 500: Database error
+
+**Example Usage**:
+```javascript
+async function updateAnimationTiming(filename, startFrame60fps, endFrame60fps) {
+  // Convert from 60fps to 24fps for API
+  const startTime24fps = Math.round((startFrame60fps / 60) * 24);
+  const endTime24fps = Math.round((endFrame60fps / 60) * 24);
+  
+  const response = await fetch('https://signcollect.nl/animDB/updateAnims.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      filename: filename,
+      startTime: startTime24fps,  // Frame number at 24fps
+      endTime: endTime24fps       // Frame number at 24fps
+    })
+  });
+  
+  const data = await response.json();
+  if (data.success) {
+    console.log('Timing updated:', data.data);
+  } else {
+    console.error('Update failed:', data.error);
+  }
+}
+
+// Example: Update HUIS-A.glb with frames 30-150 (at 60fps)
+updateAnimationTiming('HUIS-A.glb', 30, 150);
+// This will send startTime: 12, endTime: 60 to the API (24fps)
+```
+
+### 2. Get Animations
+
+**URL**: `https://signcollect.nl/animDB/getAnims.php`  
+**Method**: GET  
+**Description**: Retrieves animation files with their timing information
+
+**Parameters**:
+- `id` (optional): Specific animation ID
+- `filename` (optional): Search by exact filename
+- `search` (optional): Search by glos (sign name) prefix
+- `limit` (optional): Results per page (1-100, default: 20)
+- `offset` (optional): Pagination offset (default: 0)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "animations": [
+      {
+        "filename": "HUIS-A.glb",
+        "glos": "HUIS-A",
+        "startTime": 0.5,
+        "endTime": 2.3,
+        "file_url": "https://signcollect.nl/gebarenoverleg_media/fbx/HUIS-A.glb"
+      }
+    ],
+    "total": 150,
+    "limit": 20,
+    "offset": 0,
+    "base_url": "https://signcollect.nl/gebarenoverleg_media/fbx/"
+  }
+}
+```
+
+### 3. Text to Sign Language Conversion
 
 **URL**: `https://signcollect.nl/animDB/sensesToGlos.php`  
 **Method**: GET  
+**Description**: Converts Dutch text into sign language animations
+
 **Parameters**:
 - `text` (required): The Dutch sentence to process
 - `limit` (optional): Maximum animations per word (1-10, default: 5)

@@ -1,4 +1,6 @@
 import { availableSigns, availableSignsMap } from "./availableSigns.js";
+import SignCollectAPI from "./signCollectAPI.js";
+
 class FrameEditor {
   constructor(
     scene,
@@ -14,6 +16,7 @@ class FrameEditor {
       updateSequenceUI: updateSequenceUI,
     };
     this.scene = scene;
+    this.signCollectAPI = new SignCollectAPI();
   }
 
   show(sign, frameInfoElement, animationGroup, sequenceItem = null) {
@@ -287,6 +290,14 @@ class FrameEditor {
       elements.saveButton.innerHTML = "💾 Saving...";
 
       try {
+        // If it's an API sign, update the timing via API
+        if (sign.isApi && sign.filename) {
+          const apiSuccess = await this.updateAnimationTiming(sign.filename, newStart, newEnd);
+          if (!apiSuccess) {
+            this.showNotification("Failed to update animation timing in database", "warning");
+          }
+        }
+
         // If editing from sequence, update only the sequence item
         if (sequenceItem) {
           sequenceItem.frameRange.start = newStart;
@@ -365,6 +376,44 @@ class FrameEditor {
     elements.modal.focus();
   }
 
+  // Update animation timing via API
+  async updateAnimationTiming(filename, startFrame60fps, endFrame60fps) {
+    try {
+      // Convert from 60fps to 24fps for API
+      const startTime24fps = this.signCollectAPI.convertFrameRate(startFrame60fps, 60, 24);
+      const endTime24fps = this.signCollectAPI.convertFrameRate(endFrame60fps, 60, 24);
+      
+      console.log(`Updating animation timing for ${filename}:`);
+      console.log(`  60fps: ${startFrame60fps} - ${endFrame60fps}`);
+      console.log(`  24fps: ${startTime24fps} - ${endTime24fps}`);
+      
+      const response = await fetch('https://signcollect.nl/animDB/updateAnims.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          filename: filename,
+          startTime: startTime24fps,
+          endTime: endTime24fps
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Animation timing updated successfully:', data.data);
+        return true;
+      } else {
+        console.error('Failed to update animation timing:', data.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating animation timing:', error);
+      return false;
+    }
+  }
+
   // Programmatically set frame range without showing the modal
   async setFrameRange(sign, startFrame, endFrame, sequenceItem = null) {
     try {
@@ -372,6 +421,14 @@ class FrameEditor {
       if (startFrame >= endFrame) {
         console.error("Invalid frame range: start must be less than end");
         return false;
+      }
+
+      // If it's an API sign, update the timing via API
+      if (sign.isApi && sign.filename) {
+        const apiSuccess = await this.updateAnimationTiming(sign.filename, startFrame, endFrame);
+        if (!apiSuccess) {
+          console.warn("Failed to update animation timing in database");
+        }
       }
 
       // If editing from sequence, update only the sequence item
