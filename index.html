@@ -38,7 +38,10 @@
         <div class="input-section">
           <label for="dutchTextInput">Enter Dutch text:</label>
           <textarea id="dutchTextInput" placeholder="Type your sentence here..."></textarea>
-          <button id="convertButton">Convert to Signs</button>
+          <div class="button-group">
+            <button id="convertButton">Convert to Signs</button>
+            <button id="ngtTranslateButton">NGT Translate</button>
+          </div>
         </div>
         
         <!-- Results Section (hidden initially) -->
@@ -46,6 +49,11 @@
           <h3>Select animations for each word:</h3>
           <div id="wordSelections"></div>
           <button id="addToSequencer">Add to Sequencer</button>
+        </div>
+
+        <!-- NGT Results Section (hidden initially) -->
+        <div id="ngtResults" style="display: none;">
+          <!-- NGT translation results will be populated here -->
         </div>
         
         <!-- Loading/Error States -->

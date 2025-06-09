@@ -1270,9 +1270,33 @@ h2 {
 }
 
 #convertButton:disabled,
-#addToSequencer:disabled {
+#addToSequencer:disabled,
+#ngtTranslateButton:disabled {
   background-color: #6c757d;
   cursor: not-allowed;
+}
+
+/* Button group for text to sign modal */
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#ngtTranslateButton {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+#ngtTranslateButton:hover:not(:disabled) {
+  background-color: #45a049;
 }
 
 #loadingIndicator {
