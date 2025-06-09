@@ -364,6 +364,60 @@ class FrameEditor {
     updatePreview();
     elements.modal.focus();
   }
+
+  // Programmatically set frame range without showing the modal
+  async setFrameRange(sign, startFrame, endFrame, sequenceItem = null) {
+    try {
+      // Validate frame range
+      if (startFrame >= endFrame) {
+        console.error("Invalid frame range: start must be less than end");
+        return false;
+      }
+
+      // If editing from sequence, update only the sequence item
+      if (sequenceItem) {
+        sequenceItem.frameRange.start = startFrame;
+        sequenceItem.frameRange.end = endFrame;
+        sequenceItem.sign.start = startFrame;
+        sequenceItem.sign.end = endFrame;
+        
+        // Update UI if frame info element exists
+        const frameInfo = document.querySelector(`[id^="frame-info-${sequenceItem.id}"]`);
+        if (frameInfo) {
+          frameInfo.textContent = `Frames: ${startFrame} - ${endFrame}`;
+        }
+      } else {
+        // Otherwise update the sign and global map
+        sign.start = startFrame;
+        sign.end = endFrame;
+        
+        // Only update availableSignsMap if it's not an API sign
+        if (!sign.isApi && availableSignsMap[sign.name]) {
+          availableSignsMap[sign.name] = {
+            ...availableSignsMap[sign.name],
+            start: startFrame,
+            end: endFrame,
+          };
+          
+          // Update all frame info displays in the library
+          const frameInfo = document.getElementById(`frame-info-${sign.name}`);
+          if (frameInfo) {
+            frameInfo.textContent = `Frames: ${startFrame} - ${endFrame}`;
+          }
+        }
+      }
+
+      // Update UI
+      this.UIcontroller.updateLibraryUI();
+      this.UIcontroller.updateSequenceUI();
+      
+      console.log(`Frame range set for ${sign.name}: ${startFrame} - ${endFrame}`);
+      return true;
+    } catch (error) {
+      console.error("Error setting frame range:", error);
+      return false;
+    }
+  }
 }
 
 export default FrameEditor;

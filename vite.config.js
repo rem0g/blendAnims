@@ -36,6 +36,13 @@ export default defineConfig({
   
   // Development server configuration
   server: {
+    host: '0.0.0.0', // Allow external connections
+    port: 5173,
+    allowedHosts: ['avatar.signcollect.nl'],
+    hmr: {
+      port: 5173,
+      host: 'avatar.signcollect.nl'
+    },
     proxy: {
       // Proxy requests to SignCollect API during development
       '/api/signcollect': {

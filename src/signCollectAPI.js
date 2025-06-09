@@ -30,11 +30,12 @@ class SignCollectAPI {
         // Process animations to convert frame times
         if (data.data.animations) {
           for (let animation of data.data.animations) {
-            if (animation.startTime && animation.endTime) {
-              // Convert time strings to frame numbers and store original
+            if (animation.startTime !== undefined && animation.endTime !== undefined) {
+              // Store original frame numbers from API
               animation.originalStartTime = animation.startTime;
               animation.originalEndTime = animation.endTime;
               animation.apiFrameRate = 24; // API uses 24fps
+              console.log(`Animation ${animation.glos}: start=${animation.startTime}, end=${animation.endTime}`);
             }
           }
         }
@@ -160,13 +161,29 @@ class SignCollectAPI {
 
   // Convert API timing data to actual animation frames
   async convertTimingToFrames(animation, animationGroup = null) {
-    if (!animation.originalStartTime || !animation.originalEndTime) {
+    if (animation.originalStartTime === undefined || animation.originalEndTime === undefined) {
       return { start: null, end: null };
     }
 
-    // Convert API time strings to frames at 24fps
-    const apiStartFrames = this.timeToFrames(animation.originalStartTime, 24);
-    const apiEndFrames = this.timeToFrames(animation.originalEndTime, 24);
+    // Check if the timing data is already in frame format (numbers)
+    const startValue = animation.originalStartTime;
+    const endValue = animation.originalEndTime;
+    
+    console.log(`Converting timing for animation: start=${startValue}, end=${endValue}`);
+    
+    let apiStartFrames, apiEndFrames;
+    
+    // If the values are numbers or numeric strings, treat them as frame numbers
+    if (!isNaN(startValue) && !isNaN(endValue)) {
+      apiStartFrames = parseInt(startValue, 10);
+      apiEndFrames = parseInt(endValue, 10);
+      console.log(`Treating as frame numbers: ${apiStartFrames} - ${apiEndFrames}`);
+    } else {
+      // Otherwise, parse as time strings (HH:MM:SS format)
+      apiStartFrames = this.timeToFrames(startValue, 24);
+      apiEndFrames = this.timeToFrames(endValue, 24);
+      console.log(`Parsed as time strings: ${apiStartFrames} - ${apiEndFrames}`);
+    }
 
     // Determine actual animation frame rate
     const actualFps = animationGroup ? await this.getAnimationFrameRate(animationGroup) : 60;
@@ -174,6 +191,8 @@ class SignCollectAPI {
     // Convert from API's 24fps to actual animation fps
     const actualStartFrames = this.convertFrameRate(apiStartFrames, 24, actualFps);
     const actualEndFrames = this.convertFrameRate(apiEndFrames, 24, actualFps);
+    
+    console.log(`Final frames (${actualFps}fps): ${actualStartFrames} - ${actualEndFrames}`);
 
     return {
       start: actualStartFrames,

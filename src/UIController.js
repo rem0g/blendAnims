@@ -794,11 +794,13 @@ class UIController {
           file: cachedUrl,
           isApi: true,
           originalUrl: animation.file_url,
-          filename: animation.filename.replace(/\.fbx$/i, '.glb')
+          filename: animation.filename.replace(/\.fbx$/i, '.glb'),
+          originalStartTime: animation.originalStartTime,
+          originalEndTime: animation.originalEndTime
         };
         
         // Add to sequence
-        this.addToSequence(apiSign);
+        await this.addToSequence(apiSign);
         
         addButton.innerHTML = '✓';
         this.showNotification(`Added "${apiSign.name}" to sequence`, 'success');
@@ -1254,7 +1256,7 @@ class UIController {
   }
 
   // Handle dropping a sign into the sequence area
-  handleDrop(e) {
+  async handleDrop(e) {
     e.preventDefault();
     e.stopPropagation();
     
@@ -1278,10 +1280,10 @@ class UIController {
 
       // Use the tracked drop position
       if (this.dropPosition !== null) {
-        this.insertToSequence(sign, this.dropPosition);
+        await this.insertToSequence(sign, this.dropPosition);
       } else {
         // Fallback: add to the end
-        this.addToSequence(sign);
+        await this.addToSequence(sign);
       }
     }
     
@@ -1290,7 +1292,7 @@ class UIController {
   }
 
   // Insert a sign at a specific position in the sequence
-  insertToSequence(sign, position) {
+  async insertToSequence(sign, position) {
     // Generate a unique ID for this sequence item
     const itemId = this.nextItemId++;
     
@@ -1299,9 +1301,25 @@ class UIController {
     
     // Copy the frame values from availableSignsMap or use defaults for API/generated signs
     if (sign.isApi || sign.isGenerated) {
-      // For API signs and generated signs, use the provided values or defaults
-      clonedSign.start = sign.start || 0;
-      clonedSign.end = sign.end || null;
+      // For API signs and generated signs, convert timing data if available
+      if (sign.originalStartTime && sign.originalEndTime) {
+        // Convert API timing to frame data
+        const timingData = await this.signCollectAPI.convertTimingToFrames(sign);
+        clonedSign.start = timingData.start || 0;
+        clonedSign.end = timingData.end || null;
+        clonedSign.timingData = timingData;
+        
+        // Automatically set frame range using frameEditor API if valid
+        if (clonedSign.start < clonedSign.end) {
+          await this.frameEditor.setFrameRange(clonedSign, clonedSign.start, clonedSign.end);
+        } else {
+          console.warn(`Invalid frame range for ${clonedSign.name}: start=${clonedSign.start}, end=${clonedSign.end}`);
+        }
+      } else {
+        // Use provided values or defaults if no timing data
+        clonedSign.start = sign.start || 0;
+        clonedSign.end = sign.end || null;
+      }
     } else {
       const frameData = availableSignsMap[sign.name];
       if (frameData) {
@@ -1320,8 +1338,8 @@ class UIController {
     // Add take number to the cloned sign
     clonedSign.takeNumber = takeNumber;
     
-    // Insert at the specified position
-    this.sequenceItems.splice(position, 0, {
+    // Create the sequence item
+    const sequenceItem = {
       id: itemId,
       sign: clonedSign,
       frameRange: {
@@ -1329,14 +1347,22 @@ class UIController {
         end: clonedSign.end
       },
       blendingSpeed: 0.05 // Default blending speed
-    });
+    };
+    
+    // Insert at the specified position
+    this.sequenceItems.splice(position, 0, sequenceItem);
+    
+    // If API sign with timing data, automatically set frame range for the sequence item
+    if (clonedSign.timingData && clonedSign.isApi && clonedSign.start < clonedSign.end) {
+      await this.frameEditor.setFrameRange(clonedSign, clonedSign.start, clonedSign.end, sequenceItem);
+    }
 
     // Update the UI
     this.updateSequenceUI();
   }
 
   // Add a sign to the sequence
-  addToSequence(sign) {
+  async addToSequence(sign) {
     // Generate a unique ID for this sequence item
     const itemId = this.nextItemId++;
     
@@ -1345,9 +1371,25 @@ class UIController {
     
     // Copy the frame values from availableSignsMap or use defaults for API/generated signs
     if (sign.isApi || sign.isGenerated) {
-      // For API signs and generated signs, use the provided values or defaults
-      clonedSign.start = sign.start || 0;
-      clonedSign.end = sign.end || null;
+      // For API signs and generated signs, convert timing data if available
+      if (sign.originalStartTime && sign.originalEndTime) {
+        // Convert API timing to frame data
+        const timingData = await this.signCollectAPI.convertTimingToFrames(sign);
+        clonedSign.start = timingData.start || 0;
+        clonedSign.end = timingData.end || null;
+        clonedSign.timingData = timingData;
+        
+        // Automatically set frame range using frameEditor API if valid
+        if (clonedSign.start < clonedSign.end) {
+          await this.frameEditor.setFrameRange(clonedSign, clonedSign.start, clonedSign.end);
+        } else {
+          console.warn(`Invalid frame range for ${clonedSign.name}: start=${clonedSign.start}, end=${clonedSign.end}`);
+        }
+      } else {
+        // Use provided values or defaults if no timing data
+        clonedSign.start = sign.start || 0;
+        clonedSign.end = sign.end || null;
+      }
     } else {
       const frameData = availableSignsMap[sign.name];
       if (frameData) {
@@ -1366,8 +1408,8 @@ class UIController {
     // Add take number to the cloned sign
     clonedSign.takeNumber = takeNumber;
 
-    // Add to our sequence data with its own frame range
-    this.sequenceItems.push({
+    // Create the sequence item
+    const sequenceItem = {
       id: itemId,
       sign: clonedSign,
       frameRange: {
@@ -1375,7 +1417,15 @@ class UIController {
         end: clonedSign.end
       },
       blendingSpeed: 0.05 // Default blending speed
-    });
+    };
+    
+    // Add to our sequence data
+    this.sequenceItems.push(sequenceItem);
+    
+    // If API sign with timing data, automatically set frame range for the sequence item
+    if (clonedSign.timingData && clonedSign.isApi && clonedSign.start < clonedSign.end) {
+      await this.frameEditor.setFrameRange(clonedSign, clonedSign.start, clonedSign.end, sequenceItem);
+    }
 
     // Update the UI
     this.updateSequenceUI();
@@ -1906,9 +1956,9 @@ class UIController {
       
       // Insert the static animation right after the current item
       if (currentIndex !== -1) {
-        this.insertToSequence(staticSign, currentIndex + 1);
+        await this.insertToSequence(staticSign, currentIndex + 1);
       } else {
-        this.addToSequence(staticSign);
+        await this.addToSequence(staticSign);
       }
       
       this.showNotification(`Added static hold for "${sign.name}"`, "success");
