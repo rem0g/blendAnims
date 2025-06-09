@@ -137,7 +137,11 @@ class TextToSignModal {
           option.value = JSON.stringify({
             filename: anim.filename,
             url: anim.file_url,
-            gloss: anim.gloss
+            gloss: anim.gloss,
+            startTime: anim.startTime,
+            endTime: anim.endTime,
+            originalStartTime: anim.originalStartTime,
+            originalEndTime: anim.originalEndTime
           });
           option.textContent = `${anim.gloss} - ${anim.filename}`;
           select.appendChild(option);
@@ -177,7 +181,11 @@ class TextToSignModal {
           word: select.dataset.word,
           filename: animData.filename,
           url: animData.url,
-          gloss: animData.gloss
+          gloss: animData.gloss,
+          startTime: animData.startTime,
+          endTime: animData.endTime,
+          originalStartTime: animData.originalStartTime,
+          originalEndTime: animData.originalEndTime
         });
       }
     });
@@ -193,10 +201,23 @@ class TextToSignModal {
         const animation = {
           filename: anim.filename,
           file_url: anim.url,
-          gloss: anim.gloss
+          gloss: anim.gloss,
+          originalStartTime: anim.originalStartTime,
+          originalEndTime: anim.originalEndTime
         };
         
         const cachedUrl = await this.uiController.signCollectAPI.getCachedFileUrl(animation);
+        
+        // Convert timing data if available
+        let startFrame = null;
+        let endFrame = null;
+        
+        if (anim.originalStartTime && anim.originalEndTime) {
+          // We'll convert timing after loading the animation, for now store the original timing
+          const timingData = await this.uiController.signCollectAPI.convertTimingToFrames(animation);
+          startFrame = timingData.start;
+          endFrame = timingData.end;
+        }
         
         // Create sign object compatible with the existing system
         return {
@@ -205,8 +226,14 @@ class TextToSignModal {
           isApi: true,
           originalUrl: anim.url,
           filename: anim.filename,
-          start: 0,
-          end: null
+          start: startFrame || 0,
+          end: endFrame || null,
+          timingData: {
+            originalStartTime: anim.originalStartTime,
+            originalEndTime: anim.originalEndTime,
+            apiFps: 24,
+            actualFps: 60 // Will be updated when animation loads
+          }
         };
       } catch (error) {
         console.error(`Failed to download ${anim.filename}:`, error);

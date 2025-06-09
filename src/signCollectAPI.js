@@ -27,6 +27,18 @@ class SignCollectAPI {
       const data = await response.json();
 
       if (data.success) {
+        // Process animations to convert frame times
+        if (data.data.animations) {
+          for (let animation of data.data.animations) {
+            if (animation.startTime && animation.endTime) {
+              // Convert time strings to frame numbers and store original
+              animation.originalStartTime = animation.startTime;
+              animation.originalEndTime = animation.endTime;
+              animation.apiFrameRate = 24; // API uses 24fps
+            }
+          }
+        }
+        
         // Cache the results
         this.cache.set(cacheKey, data.data);
         return data.data;
@@ -102,6 +114,75 @@ class SignCollectAPI {
     });
 
     return fileUrl;
+  }
+
+  // Convert time string (HH:MM:SS) to frame number at given fps
+  timeToFrames(timeString, fps = 24) {
+    if (!timeString) return null;
+    
+    const parts = timeString.split(':');
+    if (parts.length !== 3) return null;
+    
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+    
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    return Math.round(totalSeconds * fps);
+  }
+
+  // Convert frames from one fps to another
+  convertFrameRate(frames, fromFps, toFps) {
+    if (!frames || !fromFps || !toFps) return frames;
+    return Math.round((frames / fromFps) * toFps);
+  }
+
+  // Get animation frame rate from GLB file
+  async getAnimationFrameRate(animationGroup) {
+    if (!animationGroup || !animationGroup.targetedAnimations || animationGroup.targetedAnimations.length === 0) {
+      return 60; // Default assumption for GLB files
+    }
+
+    try {
+      // Get the first animation to determine frame rate
+      const firstAnimation = animationGroup.targetedAnimations[0].animation;
+      const keys = firstAnimation.getKeys();
+      
+      if (keys.length < 2) return 60;
+      
+      // Most sign language animations are at 60fps
+      return 60; // Most GLB animations are 60fps
+    } catch (error) {
+      console.warn('Could not determine animation frame rate, using default 60fps:', error);
+      return 60;
+    }
+  }
+
+  // Convert API timing data to actual animation frames
+  async convertTimingToFrames(animation, animationGroup = null) {
+    if (!animation.originalStartTime || !animation.originalEndTime) {
+      return { start: null, end: null };
+    }
+
+    // Convert API time strings to frames at 24fps
+    const apiStartFrames = this.timeToFrames(animation.originalStartTime, 24);
+    const apiEndFrames = this.timeToFrames(animation.originalEndTime, 24);
+
+    // Determine actual animation frame rate
+    const actualFps = animationGroup ? await this.getAnimationFrameRate(animationGroup) : 60;
+    
+    // Convert from API's 24fps to actual animation fps
+    const actualStartFrames = this.convertFrameRate(apiStartFrames, 24, actualFps);
+    const actualEndFrames = this.convertFrameRate(apiEndFrames, 24, actualFps);
+
+    return {
+      start: actualStartFrames,
+      end: actualEndFrames,
+      originalStartTime: animation.originalStartTime,
+      originalEndTime: animation.originalEndTime,
+      apiFps: 24,
+      actualFps: actualFps
+    };
   }
 
   // Clear cache (optional memory management)
