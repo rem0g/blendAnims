@@ -128,7 +128,10 @@ class TextToSignModal {
         // Add "none" option
         select.innerHTML = '<option value="">-- Select animation --</option>';
         
-        // Add animation options
+        let bestMatch = null;
+        let bestScore = 0;
+        
+        // Add animation options and find best match
         wordData.animations.forEach(anim => {
           const option = document.createElement('option');
           option.value = JSON.stringify({
@@ -138,7 +141,19 @@ class TextToSignModal {
           });
           option.textContent = `${anim.gloss} - ${anim.filename}`;
           select.appendChild(option);
+          
+          // Calculate similarity score
+          const score = this.calculateSimilarity(wordData.word.toLowerCase(), anim.gloss.toLowerCase());
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = option;
+          }
         });
+        
+        // Auto-select the best match if similarity is good enough
+        if (bestMatch && bestScore > 0.3) {
+          bestMatch.selected = true;
+        }
       } else {
         // No animations available
         select.innerHTML = '<option value="">No animations available</option>';
@@ -236,6 +251,62 @@ class TextToSignModal {
   
   close() {
     this.modal.style.display = 'none';
+  }
+  
+  // Calculate similarity between two strings using multiple methods
+  calculateSimilarity(word1, word2) {
+    // Exact match gets highest score
+    if (word1 === word2) {
+      return 1.0;
+    }
+    
+    // Check if one word starts with the other
+    if (word1.startsWith(word2) || word2.startsWith(word1)) {
+      return 0.8;
+    }
+    
+    // Check if one word contains the other
+    if (word1.includes(word2) || word2.includes(word1)) {
+      return 0.6;
+    }
+    
+    // Levenshtein distance based similarity
+    const distance = this.levenshteinDistance(word1, word2);
+    const maxLength = Math.max(word1.length, word2.length);
+    const similarity = 1 - (distance / maxLength);
+    
+    return similarity;
+  }
+  
+  // Calculate Levenshtein distance between two strings
+  levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    // Create matrix
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    // Fill matrix
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
   }
 }
 
