@@ -865,10 +865,11 @@ class UIController {
       'root': '📁 General Signs',
       'trein': '🚂 Train Signs',
       'hh-gebaar': '👋 HH Gebaar',
-      'hh-zin': '💬 HH Zinnen'
+      'hh-zin': '💬 HH Zinnen',
+      'znn': '🗣️ ZNN Signs'
     };
 
-    const folderOrder = ['root', 'trein', 'hh-gebaar', 'hh-zin'];
+    const folderOrder = ['root', 'trein', 'hh-gebaar', 'hh-zin', 'znn'];
 
     // Create collapsible sections for each folder
     folderOrder.forEach(folderKey => {

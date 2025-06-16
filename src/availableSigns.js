@@ -160,6 +160,18 @@ export const availableSigns = [
   {name: "zon licht", file: "signs/hh/gebaar/zon_licht_250507_20.glb", start: 0, end: null, folder: "hh-gebaar"},
   {name: "zwangerschap", file: "signs/hh/gebaar/zwangerschap_250507_28.glb", start: 0, end: null, folder: "hh-gebaar"},
 
+  // ZNN folder
+  {name: "Eerst naar de wc dan gaan we handen wassen en daarna gaan we eten", file: "signs/znn/Eerst_naar_de_wc_dan_gaan_we_handen_wassen_en_daarna_gaan_we_eten_250604_1_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "FODOK Welkomstwoord", file: "signs/znn/FODOK_Welkomstwoord_250604_2_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "Fijn om je weer te zien", file: "signs/znn/Fijn_om_je_weer_te_zien_250604_2_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "Heb je al geplast", file: "signs/znn/Heb_je_al_geplast_250604_3_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "Heb je genoeg gegeten", file: "signs/znn/Heb_je_genoeg_gegeten_250604_1_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "Is het warm", file: "signs/znn/Is_het_warm_250604_1_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "Nee jouw broer gaat nu ook naar bed dus jij gaat ook naar bed", file: "signs/znn/Nee_jouw_broer_gaat_nu_ook_naar_bed_dus_jij_gaat_ook_naar_bed_250604_2_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "Probeer je het zelf", file: "signs/znn/Probeer_je_het_zelf_250604_4_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "Wat vond je het stomste vandaag", file: "signs/znn/Wat_vond_je_het_stomste_vandaag_250604_17_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+  {name: "eerst de vulva dan de billen vegen", file: "signs/znn/eerst_de_vulva_dan_de_billen_vegen_250604_1_GlassesGuy.glb", start: 0, end: null, folder: "znn"},
+
   // HH Zin folder
   {name: "12 jaar onder pil slikken niet", file: "signs/hh/zin/12_jaar_onder_pil_slikken_niet.glb", start: 0, end: null, folder: "hh-zin"},
   {name: "12 jaar ouder arts overleggen", file: "signs/hh/zin/12_jaar_ouder_arts_overleggen.glb", start: 0, end: null, folder: "hh-zin"},
