@@ -4,6 +4,7 @@ import { availableSignsMap } from "./availableSigns";
 import SequencerAPI from "./sequencerAPI";
 import SignCollectAPI from "./signCollectAPI";
 import TextToSignModal from "./textToSignModal";
+import { fetchMTSigns } from "./mtSignsAPI";
 
 // Class to handle UI elements and interactions, such as drag and drop
 class UIController {
@@ -829,6 +830,9 @@ class UIController {
   populateSignLibrary() {
     const library = document.getElementById("sign-library");
 
+    // Clear existing content before repopulating
+    library.innerHTML = '';
+
     // Group signs by folder
     const folderGroups = {};
     this.availableSigns.forEach(sign => {
@@ -866,10 +870,11 @@ class UIController {
       'trein': '🚂 Train Signs',
       'hh-gebaar': '👋 HH Gebaar',
       'hh-zin': '💬 HH Zinnen',
-      'znn': '🗣️ ZNN Signs'
+      'znn': '🗣️ ZNN Signs',
+      'mt': '🎬 MT Signs'
     };
 
-    const folderOrder = ['root', 'trein', 'hh-gebaar', 'hh-zin', 'znn'];
+    const folderOrder = ['root', 'trein', 'hh-gebaar', 'hh-zin', 'znn', 'mt'];
 
     // Create collapsible sections for each folder
     folderOrder.forEach(folderKey => {
@@ -946,7 +951,7 @@ class UIController {
     const frameInfo = document.createElement("span");
     frameInfo.id = `frame-info-${sign.name}`;
     frameInfo.className = "sign-description";
-    frameInfo.textContent = `Frames: ${availableSignsMap[sign.name].start} - ${availableSignsMap[sign.name].end}`;
+    frameInfo.textContent = `Frames: ${sign.start} - ${sign.end}`;
     signInfo.appendChild(frameInfo);
 
     signItem.appendChild(signInfo);
@@ -961,7 +966,9 @@ class UIController {
     playButton.innerHTML = "Play";
     playButton.onclick = async (e) => {
       e.stopPropagation();
-      this.animationController.playSign(sign.name, signItem);
+      // For MT signs (folder='mt'), pass the sign object as apiSign
+      const apiSign = sign.folder === 'mt' ? sign : null;
+      this.animationController.playSign(sign.name, signItem, apiSign);
     };
     controls.appendChild(playButton);
 
@@ -1995,6 +2002,25 @@ class UIController {
       this.textToSignModal.open();
     } else {
       console.error("Text to sign modal not initialized");
+    }
+  }
+
+  /**
+   * Load MT signs from the API and add them to the available signs
+   * This should be called after init() to populate the MT Signs folder
+   */
+  async loadMTSigns() {
+    try {
+      const mtSigns = await fetchMTSigns();
+      if (mtSigns && mtSigns.length > 0) {
+        // Add MT signs to available signs
+        this.availableSigns = [...this.availableSigns, ...mtSigns];
+        // Repopulate the sign library to show MT signs
+        this.populateSignLibrary();
+        console.log(`Added ${mtSigns.length} MT signs to library`);
+      }
+    } catch (error) {
+      console.error('Failed to load MT signs:', error);
     }
   }
 }

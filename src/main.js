@@ -59,7 +59,10 @@ BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (loader) {
     isPlaying
   );
   uiController.init();
-  
+
+  // Load MT signs from API (async, will update library when loaded)
+  uiController.loadMTSigns();
+
   // Set UI controller reference in animation controller
   animationController.uiController = uiController;
 

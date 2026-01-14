@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>GLB Animation Comparison</title>
+
+    <style>
+      html, body {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #1a1a2e;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      /* Sidebar */
+      .comparison-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 320px;
+        height: 100%;
+        background: rgba(26, 26, 46, 0.95);
+        border-right: 1px solid #4a4a6a;
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+      }
+
+      .sidebar-header {
+        padding: 15px;
+        border-bottom: 1px solid #4a4a6a;
+        background: #16213e;
+      }
+
+      .sidebar-header h1 {
+        margin: 0 0 5px 0;
+        font-size: 18px;
+        color: #e94560;
+        font-weight: 600;
+      }
+
+      .sidebar-header p {
+        margin: 0 0 12px 0;
+        font-size: 12px;
+        color: #8892b0;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #4a4a6a;
+        border-radius: 6px;
+        background: #0f3460;
+        color: white;
+        font-size: 14px;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .search-input:focus {
+        border-color: #e94560;
+      }
+
+      .search-input::placeholder {
+        color: #6b7280;
+      }
+
+      /* Pairs list */
+      .pairs-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+      }
+
+      .pair-item {
+        padding: 12px 14px;
+        margin-bottom: 6px;
+        background: #16213e;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+      }
+
+      .pair-item:hover {
+        background: #1a3a5c;
+        border-color: #4a4a6a;
+      }
+
+      .pair-item.active {
+        background: #0f3460;
+        border-color: #e94560;
+      }
+
+      .pair-item .name {
+        color: #fff;
+        font-size: 12px;
+        word-break: break-all;
+        font-family: 'Monaco', 'Menlo', monospace;
+      }
+
+      .no-results {
+        color: #6b7280;
+        text-align: center;
+        padding: 20px;
+        font-size: 14px;
+      }
+
+      /* Video panel */
+      .video-panel {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 400px;
+        background: rgba(26, 26, 46, 0.95);
+        border: 1px solid #4a4a6a;
+        border-radius: 8px;
+        z-index: 100;
+        overflow: hidden;
+      }
+
+      .video-panel.hidden {
+        display: none;
+      }
+
+      .video-header {
+        padding: 10px 15px;
+        background: #16213e;
+        border-bottom: 1px solid #4a4a6a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .video-header h3 {
+        margin: 0;
+        font-size: 13px;
+        color: #e94560;
+      }
+
+      .video-close {
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0;
+        line-height: 1;
+      }
+
+      .video-close:hover {
+        color: #fff;
+      }
+
+      .video-container {
+        width: 100%;
+        background: #000;
+      }
+
+      .video-container video {
+        width: 100%;
+        display: block;
+      }
+
+      .video-no-source {
+        padding: 40px 20px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      /* Playback controls */
+      .playback-controls {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        z-index: 100;
+        margin-left: 160px;
+      }
+
+      .control-btn {
+        padding: 10px 24px;
+        background: #16213e;
+        border: 1px solid #4a4a6a;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .control-btn:hover {
+        background: #1a3a5c;
+        border-color: #e94560;
+      }
+
+      .control-btn.active {
+        background: #0f3460;
+        border-color: #e94560;
+        color: #e94560;
+      }
+
+      /* Loading overlay */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        color: white;
+        font-size: 18px;
+      }
+
+      .loading-overlay.hidden {
+        display: none;
+      }
+
+      /* Timeline slider */
+      .timeline-container {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        z-index: 100;
+        margin-left: 160px;
+        background: rgba(22, 33, 62, 0.95);
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: 1px solid #4a4a6a;
+      }
+
+      .frame-display {
+        color: #8892b0;
+        font-size: 12px;
+        font-family: 'Monaco', 'Menlo', monospace;
+        min-width: 100px;
+        text-align: center;
+      }
+
+      .timeline-slider {
+        width: 400px;
+        height: 6px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: #0f3460;
+        border-radius: 3px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      .timeline-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #e94560;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+
+      .timeline-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+
+      .timeline-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #e94560;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+      }
+
+      /* Keyboard shortcuts hint */
+      .shortcuts-hint {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(26, 26, 46, 0.9);
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 11px;
+        color: #6b7280;
+        z-index: 100;
+      }
+
+      .shortcuts-hint kbd {
+        background: #0f3460;
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin: 0 2px;
+        color: #8892b0;
+      }
+
+      /* Scrollbar styling */
+      .pairs-list::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .pairs-list::-webkit-scrollbar-track {
+        background: #1a1a2e;
+      }
+
+      .pairs-list::-webkit-scrollbar-thumb {
+        background: #4a4a6a;
+        border-radius: 4px;
+      }
+
+      .pairs-list::-webkit-scrollbar-thumb:hover {
+        background: #5a5a7a;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="renderCanvas" touch-action="none"></canvas>
+
+    <!-- Sidebar with animation list -->
+    <div class="comparison-sidebar">
+      <div class="sidebar-header">
+        <h1>Animation Comparison</h1>
+        <p>Compare default_pp vs default GLB files</p>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search animations... (press /)">
+      </div>
+      <div class="pairs-list" id="pairsList">
+        <div class="no-results">Loading animations...</div>
+      </div>
+    </div>
+
+    <!-- Video panel -->
+    <div class="video-panel hidden" id="videoPanel">
+      <div class="video-header">
+        <h3>Source Video</h3>
+        <button class="video-close" id="videoClose">&times;</button>
+      </div>
+      <div class="video-container">
+        <video id="sourceVideo" controls muted></video>
+        <div class="video-no-source" id="videoNoSource">No video available for this animation</div>
+      </div>
+    </div>
+
+    <!-- Timeline slider -->
+    <div class="timeline-container">
+      <span class="frame-display" id="frameDisplay">0 / 0</span>
+      <input type="range" class="timeline-slider" id="timelineSlider" min="0" max="1000" value="0">
+    </div>
+
+    <!-- Playback controls -->
+    <div class="playback-controls">
+      <button class="control-btn" id="playBtn">Play</button>
+      <button class="control-btn" id="loopBtn">Loop: Off</button>
+      <button class="control-btn" id="resetBtn">Reset</button>
+      <button class="control-btn" id="videoToggleBtn">Video: Off</button>
+      <button class="control-btn" id="resetViewBtn">Reset View</button>
+    </div>
+
+    <!-- Keyboard shortcuts hint -->
+    <div class="shortcuts-hint">
+      <kbd>Space</kbd> Play/Pause
+      <kbd>L</kbd> Loop
+      <kbd>R</kbd> Reset
+      <kbd>V</kbd> Video
+      <kbd>/</kbd> Search
+      <kbd>Esc</kbd> Clear
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">Loading animations...</div>
+
+    <script src="src/compareMain.js" type="module"></script>
+  </body>
+</html>

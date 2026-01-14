@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { resolve } from 'path'
 
 export default defineConfig({
   // Base URL for GitHub Pages
@@ -20,6 +21,11 @@ export default defineConfig({
     
     // Rollup options
     rollupOptions: {
+      // Multi-page app support
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        compare: resolve(__dirname, 'compare.html')
+      },
       output: {
         // Manual chunks to optimize loading
         manualChunks: {
