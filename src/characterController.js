@@ -552,8 +552,8 @@ class CharacterController {
   async playAnimationGroup(animationGroup) {
     return new Promise((resolve, reject) => {
       try {
-        // Stop all animations and reset the character
-        this.stopAllAnimations();
+        // Stop all animations but keep existing blending settings
+        this.stopAllAnimations(false);
         
         // Stop any currently playing animation
         if (this.currentAnimationGroup) {
@@ -607,12 +607,14 @@ class CharacterController {
     return rootMesh;
   }
   
-  // Stop all animations and reset character to default pose
-  stopAllAnimations() {
+  // Stop all animations. Optionally reset groups to their initial state
+  stopAllAnimations(reset = true) {
     // Stop all animation groups in the scene
     this.scene.animationGroups.forEach(group => {
       group.stop();
-      group.reset();
+      if (reset) {
+        group.reset();
+      }
     });
     
     // Reset all morph targets to 0
@@ -623,7 +625,7 @@ class CharacterController {
       }
     });
     
-    console.log("Stopped all animations and reset morph targets");
+    console.log(`Stopped all animations${reset ? " and reset morph targets" : ""}`);
   }
 
   getAnimationGroup(signName) {
